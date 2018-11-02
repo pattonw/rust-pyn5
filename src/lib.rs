@@ -1,12 +1,15 @@
+#![feature(specialization)]
+
 extern crate n5;
 
 use n5::prelude::*;
 
 #[macro_use]
-extern crate cpython;
+extern crate pyo3;
 
-use cpython::{Python, PyResult};
+use pyo3::prelude::*;
 
+#[pyfunction]
 fn read_n5(_py: Python, root_path: &str, path_name: &str, translation: Vec<i64>, dimensions: Vec<i64>) -> PyResult<Vec<u8>> {
     let n = N5Filesystem::open_or_create(root_path).unwrap();
 
@@ -24,8 +27,10 @@ fn read_n5(_py: Python, root_path: &str, path_name: &str, translation: Vec<i64>,
     Ok(raw_vec)
 }
 
-py_module_initializer!(libpyn5, initlibpyn5, PyInit_libpyn5, |py, m | {
-    try!(m.add(py, "__doc__", "This module is implemented in Rust"));
-    try!(m.add(py, "read_n5", py_fn!(py, get_size(root_path: &str, path_name: &str, translation: Vec<i64>, dimensions: Vec<i64>))));
+
+#[pymodinit]
+fn pyn5(py: Python, m: &PyModule) -> PyResult<()> {
+    m.add_function(wrap_function!(read_n5))?;
+
     Ok(())
-});
+}
