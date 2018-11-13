@@ -5,8 +5,8 @@ authors = ["pattonw <pattonw@hhmi.org>"]
 
 [lib]
 name = "pyn5"
-crate-type = ["dylib"]
+crate-type = ["cdylib"]
 
 [dependencies]
-cpython = { version = "0.1", features = ["extension-module"] }
+pyo3 = { version = "0.4", features = ["extension-module"] }
 n5 = { version = "0.2", default-features = false, features = ["filesystem", "gzip", "use_ndarray"]}
