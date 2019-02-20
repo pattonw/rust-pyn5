@@ -8,5 +8,5 @@ name = "pyn5"
 crate-type = ["cdylib"]
 
 [dependencies]
-pyo3 = { version = "0.4", features = ["extension-module"] }
+pyo3 = { version = "0.6.0-alpha.4", features = ["extension-module"] }
 n5 = { version = "0.2", default-features = false, features = ["filesystem", "gzip", "use_ndarray"]}
