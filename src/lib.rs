@@ -6,6 +6,7 @@ extern crate pyo3;
 
 use n5::prelude::*;
 use pyo3::prelude::*;
+use pyo3::exceptions;
 
 #[pyclass]
 struct Dataset {
@@ -20,7 +21,7 @@ impl Dataset {
     fn __new__(obj: &PyRawObject, root_path: &str, path_name: &str) -> PyResult<()> {
         // TODO: pass in optional attributes which can be used to create datasets rather
         // than panicing when dataset does not exist
-        obj.init(|_| {
+        Ok(obj.init({
             let n = N5Filesystem::open_or_create(root_path).unwrap();
             let attributes = n.get_dataset_attributes(path_name).unwrap();
             Dataset {
@@ -28,7 +29,7 @@ impl Dataset {
                 attr: attributes,
                 path: path_name.to_string(),
             }
-        })
+        }))
     }
 
     fn read_ndarray(&self, translation: Vec<i64>, dimensions: Vec<i64>) -> PyResult<Vec<u8>> {
@@ -46,7 +47,7 @@ impl Dataset {
         let block_size = block_shape.iter().fold(1, |a, &b| a * b) as usize;
 
         if block_size != data.len() {
-            Err(exc::ValueError::new(format!(
+            Err(exceptions::ValueError::py_err(format!(
                 "Data has length {} but dataset {} has blocks with shape {:?} and size {}",
                 data.len(),
                 self.path,
@@ -58,7 +59,7 @@ impl Dataset {
             self.n5.write_block(&self.path, &self.attr, &block_in)?;
             Ok(())
         } else {
-            Err(exc::ValueError::new(format!(
+            Err(exceptions::ValueError::py_err(format!(
                 "Dataset {} does not exist!",
                 &self.path
             )))
@@ -85,16 +86,16 @@ fn create_dataset(
         n.create_dataset(path_name, &data_attrs)?;
         Ok(())
     } else {
-        Err(exc::ValueError::new(format!(
+        Err(exceptions::ValueError::py_err(format!(
             "Dataset {} already exists!",
             path_name
         )))
     }
 }
 
-#[pymodinit]
+#[pymodule]
 fn libpyn5(_py: Python, m: &PyModule) -> PyResult<()> {
-    m.add_function(wrap_function!(create_dataset))?;
+    m.add_wrapped(wrap_pyfunction!(create_dataset))?;
     m.add_class::<Dataset>()?;
 
     Ok(())
