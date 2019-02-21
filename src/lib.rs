@@ -18,16 +18,26 @@ struct Dataset {
 #[pymethods]
 impl Dataset {
     #[new]
-    fn __new__(obj: &PyRawObject, root_path: &str, path_name: &str) -> PyResult<()> {
+    fn __new__(obj: &PyRawObject, root_path: &str, path_name: &str, read_only: bool) -> PyResult<()> {
         // TODO: pass in optional attributes which can be used to create datasets rather
         // than panicing when dataset does not exist
         Ok(obj.init({
-            let n = N5Filesystem::open_or_create(root_path).unwrap();
-            let attributes = n.get_dataset_attributes(path_name).unwrap();
-            Dataset {
-                n5: n,
-                attr: attributes,
-                path: path_name.to_string(),
+            if read_only {
+                let n = N5Filesystem::open(root_path).unwrap();
+                let attributes = n.get_dataset_attributes(path_name).unwrap();
+                Dataset {
+                    n5: n,
+                    attr: attributes,
+                    path: path_name.to_string(),
+                }
+            } else {
+                let n = N5Filesystem::open_or_create(root_path).unwrap();
+                let attributes = n.get_dataset_attributes(path_name).unwrap();
+                Dataset {
+                    n5: n,
+                    attr: attributes,
+                    path: path_name.to_string(),
+                }
             }
         }))
     }
