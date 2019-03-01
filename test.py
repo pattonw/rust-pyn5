@@ -17,7 +17,7 @@ def setup_dataset() -> pyn5.Dataset:
     if dataset.is_dir():
         shutil.rmtree(dataset)
     pyn5.create_dataset("test.n5", "test", [10, 10, 10], [2, 2, 2])
-    return pyn5.Dataset("test.n5", "test")
+    return pyn5.Dataset("test.n5", "test", False)
 
 
 def test_write_not_enough_data() -> Result:
