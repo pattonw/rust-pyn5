@@ -20,7 +20,7 @@ fn create_dataset(
     let n = N5Filesystem::open_or_create(root_path).unwrap();
     if !n.exists(path_name) {
         match dtype {
-            "u8" => {
+            "UINT8" => {
                 let data_attrs = DatasetAttributes::new(
                     dimensions,
                     block_size,
@@ -30,7 +30,7 @@ fn create_dataset(
                 n.create_dataset(path_name, &data_attrs)?;
                 Ok(())
             }
-            "u16" => {
+            "UINT16" => {
                 let data_attrs = DatasetAttributes::new(
                     dimensions,
                     block_size,
@@ -40,7 +40,7 @@ fn create_dataset(
                 n.create_dataset(path_name, &data_attrs)?;
                 Ok(())
             }
-            "u32" => {
+            "UINT32" => {
                 let data_attrs = DatasetAttributes::new(
                     dimensions,
                     block_size,
@@ -50,7 +50,7 @@ fn create_dataset(
                 n.create_dataset(path_name, &data_attrs)?;
                 Ok(())
             }
-            "u64" => {
+            "UINT64" => {
                 let data_attrs = DatasetAttributes::new(
                     dimensions,
                     block_size,
@@ -60,7 +60,7 @@ fn create_dataset(
                 n.create_dataset(path_name, &data_attrs)?;
                 Ok(())
             }
-            "i8" => {
+            "INT8" => {
                 let data_attrs = DatasetAttributes::new(
                     dimensions,
                     block_size,
@@ -70,7 +70,7 @@ fn create_dataset(
                 n.create_dataset(path_name, &data_attrs)?;
                 Ok(())
             }
-            "i16" => {
+            "INT16" => {
                 let data_attrs = DatasetAttributes::new(
                     dimensions,
                     block_size,
@@ -80,7 +80,7 @@ fn create_dataset(
                 n.create_dataset(path_name, &data_attrs)?;
                 Ok(())
             }
-            "i32" => {
+            "INT32" => {
                 let data_attrs = DatasetAttributes::new(
                     dimensions,
                     block_size,
@@ -90,7 +90,7 @@ fn create_dataset(
                 n.create_dataset(path_name, &data_attrs)?;
                 Ok(())
             }
-            "i64" => {
+            "INT64" => {
                 let data_attrs = DatasetAttributes::new(
                     dimensions,
                     block_size,
@@ -100,7 +100,7 @@ fn create_dataset(
                 n.create_dataset(path_name, &data_attrs)?;
                 Ok(())
             }
-            "f32" => {
+            "FLOAT32" => {
                 let data_attrs = DatasetAttributes::new(
                     dimensions,
                     block_size,
@@ -110,7 +110,7 @@ fn create_dataset(
                 n.create_dataset(path_name, &data_attrs)?;
                 Ok(())
             }
-            "f64" => {
+            "FLOAT64" => {
                 let data_attrs = DatasetAttributes::new(
                     dimensions,
                     block_size,
@@ -123,7 +123,10 @@ fn create_dataset(
             _ => Err(exceptions::ValueError::py_err(format!(
                 "Datatype {} is not supported. Please choose from {:#?}",
                 dtype,
-                ("u8", "u16", "u32", "u64", "i8", "i16", "i32", "i64", "f32", "f64")
+                (
+                    "UINT8", "UINT16", "UINT32", "UINT64", "INT8", "INT16", "INT32", "INT64",
+                    "FLOAT32", "FLOAT64"
+                )
             ))),
         }
     } else {
@@ -134,745 +137,96 @@ fn create_dataset(
     }
 }
 
-#[pyclass]
-struct DatasetU8 {
-    n5: N5Filesystem,
-    attr: DatasetAttributes,
-    path: String,
-}
+macro_rules! dataset {
+    ($dataset_name:ident, $d_name:ident, $d_type:ty) => {
+        #[pyclass]
+        struct $dataset_name {
+            n5: N5Filesystem,
+            attr: DatasetAttributes,
+            path: String,
+        }
 
-#[pymethods]
-impl DatasetU8 {
-    #[new]
-    fn __new__(
-        obj: &PyRawObject,
-        root_path: &str,
-        path_name: &str,
-        read_only: bool,
-    ) -> PyResult<()> {
-        // TODO: pass in optional attributes which can be used to create datasets rather
-        // than panicing when dataset does not exist
-        Ok(obj.init({
-            if read_only {
-                let n = N5Filesystem::open(root_path).unwrap();
-                let attributes = n.get_dataset_attributes(path_name).unwrap();
-                Self {
-                    n5: n,
-                    attr: attributes,
-                    path: path_name.to_string(),
-                }
-            } else {
-                let n = N5Filesystem::open_or_create(root_path).unwrap();
-                let attributes = n.get_dataset_attributes(path_name).unwrap();
-                Self {
-                    n5: n,
-                    attr: attributes,
-                    path: path_name.to_string(),
+        #[pymethods]
+        impl $dataset_name {
+            #[new]
+            fn __new__(
+                obj: &PyRawObject,
+                root_path: &str,
+                path_name: &str,
+                read_only: bool,
+            ) -> PyResult<()> {
+                Ok(obj.init({
+                    if read_only {
+                        let n = N5Filesystem::open(root_path).unwrap();
+                        let attributes = n.get_dataset_attributes(path_name).unwrap();
+                        Self {
+                            n5: n,
+                            attr: attributes,
+                            path: path_name.to_string(),
+                        }
+                    } else {
+                        let n = N5Filesystem::open_or_create(root_path).unwrap();
+                        let attributes = n.get_dataset_attributes(path_name).unwrap();
+                        Self {
+                            n5: n,
+                            attr: attributes,
+                            path: path_name.to_string(),
+                        }
+                    }
+                }))
+            }
+
+            fn read_ndarray(
+                &self,
+                translation: Vec<i64>,
+                dimensions: Vec<i64>,
+            ) -> PyResult<Vec<$d_type>> {
+                let bounding_box = BoundingBox::new(translation, dimensions);
+
+                let block_out = self
+                    .n5
+                    .read_ndarray::<$d_type>(&self.path, &self.attr, &bounding_box)
+                    .unwrap();
+                Ok(block_out.into_raw_vec())
+            }
+
+            fn write_block(&self, position: Vec<i64>, data: Vec<$d_type>) -> PyResult<()> {
+                let block_shape = self.attr.get_block_size().to_vec();
+                let block_size = block_shape.iter().fold(1, |a, &b| a * b) as usize;
+
+                if block_size != data.len() {
+                    Err(exceptions::ValueError::py_err(format!(
+                        "Data has length {} but dataset {} has blocks with shape {:?} and size {}",
+                        data.len(),
+                        self.path,
+                        block_shape,
+                        block_size
+                    )))
+                } else if self.n5.exists(&self.path) {
+                    let block_in = VecDataBlock::new(block_shape, position, data);
+                    self.n5.write_block(&self.path, &self.attr, &block_in)?;
+                    Ok(())
+                } else {
+                    Err(exceptions::ValueError::py_err(format!(
+                        "Dataset {} does not exist!",
+                        &self.path
+                    )))
                 }
             }
-        }))
-    }
-
-    fn read_ndarray(&self, translation: Vec<i64>, dimensions: Vec<i64>) -> PyResult<Vec<u8>> {
-        let bounding_box = BoundingBox::new(translation, dimensions);
-
-        let block_out = self
-            .n5
-            .read_ndarray::<u8>(&self.path, &self.attr, &bounding_box)
-            .unwrap();
-        Ok(block_out.into_raw_vec())
-    }
-
-    fn write_block(&self, position: Vec<i64>, data: Vec<u8>) -> PyResult<()> {
-        let block_shape = self.attr.get_block_size().to_vec();
-        let block_size = block_shape.iter().fold(1, |a, &b| a * b) as usize;
-
-        if block_size != data.len() {
-            Err(exceptions::ValueError::py_err(format!(
-                "Data has length {} but dataset {} has blocks with shape {:?} and size {}",
-                data.len(),
-                self.path,
-                block_shape,
-                block_size
-            )))
-        } else if self.n5.exists(&self.path) {
-            let block_in = VecDataBlock::new(block_shape, position, data);
-            self.n5.write_block(&self.path, &self.attr, &block_in)?;
-            Ok(())
-        } else {
-            Err(exceptions::ValueError::py_err(format!(
-                "Dataset {} does not exist!",
-                &self.path
-            )))
         }
-    }
+    };
 }
 
-#[pyclass]
-struct DatasetU16 {
-    n5: N5Filesystem,
-    attr: DatasetAttributes,
-    path: String,
-}
-
-#[pymethods]
-impl DatasetU16 {
-    #[new]
-    fn __new__(
-        obj: &PyRawObject,
-        root_path: &str,
-        path_name: &str,
-        read_only: bool,
-    ) -> PyResult<()> {
-        // TODO: pass in optional attributes which can be used to create datasets rather
-        // than panicing when dataset does not exist
-        Ok(obj.init({
-            if read_only {
-                let n = N5Filesystem::open(root_path).unwrap();
-                let attributes = n.get_dataset_attributes(path_name).unwrap();
-                Self {
-                    n5: n,
-                    attr: attributes,
-                    path: path_name.to_string(),
-                }
-            } else {
-                let n = N5Filesystem::open_or_create(root_path).unwrap();
-                let attributes = n.get_dataset_attributes(path_name).unwrap();
-                Self {
-                    n5: n,
-                    attr: attributes,
-                    path: path_name.to_string(),
-                }
-            }
-        }))
-    }
-
-    fn read_ndarray(&self, translation: Vec<i64>, dimensions: Vec<i64>) -> PyResult<Vec<u16>> {
-        let bounding_box = BoundingBox::new(translation, dimensions);
-
-        let block_out = self
-            .n5
-            .read_ndarray::<u16>(&self.path, &self.attr, &bounding_box)
-            .unwrap();
-        Ok(block_out.into_raw_vec())
-    }
-
-    fn write_block(&self, position: Vec<i64>, data: Vec<u16>) -> PyResult<()> {
-        let block_shape = self.attr.get_block_size().to_vec();
-        let block_size = block_shape.iter().fold(1, |a, &b| a * b) as usize;
-
-        if block_size != data.len() {
-            Err(exceptions::ValueError::py_err(format!(
-                "Data has length {} but dataset {} has blocks with shape {:?} and size {}",
-                data.len(),
-                self.path,
-                block_shape,
-                block_size
-            )))
-        } else if self.n5.exists(&self.path) {
-            let block_in = VecDataBlock::new(block_shape, position, data);
-            self.n5.write_block(&self.path, &self.attr, &block_in)?;
-            Ok(())
-        } else {
-            Err(exceptions::ValueError::py_err(format!(
-                "Dataset {} does not exist!",
-                &self.path
-            )))
-        }
-    }
-}
-
-#[pyclass]
-struct DatasetU32 {
-    n5: N5Filesystem,
-    attr: DatasetAttributes,
-    path: String,
-}
-
-#[pymethods]
-impl DatasetU32 {
-    #[new]
-    fn __new__(
-        obj: &PyRawObject,
-        root_path: &str,
-        path_name: &str,
-        read_only: bool,
-    ) -> PyResult<()> {
-        // TODO: pass in optional attributes which can be used to create datasets rather
-        // than panicing when dataset does not exist
-        Ok(obj.init({
-            if read_only {
-                let n = N5Filesystem::open(root_path).unwrap();
-                let attributes = n.get_dataset_attributes(path_name).unwrap();
-                Self {
-                    n5: n,
-                    attr: attributes,
-                    path: path_name.to_string(),
-                }
-            } else {
-                let n = N5Filesystem::open_or_create(root_path).unwrap();
-                let attributes = n.get_dataset_attributes(path_name).unwrap();
-                Self {
-                    n5: n,
-                    attr: attributes,
-                    path: path_name.to_string(),
-                }
-            }
-        }))
-    }
-
-    fn read_ndarray(&self, translation: Vec<i64>, dimensions: Vec<i64>) -> PyResult<Vec<u32>> {
-        let bounding_box = BoundingBox::new(translation, dimensions);
-
-        let block_out = self
-            .n5
-            .read_ndarray::<u32>(&self.path, &self.attr, &bounding_box)
-            .unwrap();
-        Ok(block_out.into_raw_vec())
-    }
-
-    fn write_block(&self, position: Vec<i64>, data: Vec<u32>) -> PyResult<()> {
-        let block_shape = self.attr.get_block_size().to_vec();
-        let block_size = block_shape.iter().fold(1, |a, &b| a * b) as usize;
-
-        if block_size != data.len() {
-            Err(exceptions::ValueError::py_err(format!(
-                "Data has length {} but dataset {} has blocks with shape {:?} and size {}",
-                data.len(),
-                self.path,
-                block_shape,
-                block_size
-            )))
-        } else if self.n5.exists(&self.path) {
-            let block_in = VecDataBlock::new(block_shape, position, data);
-            self.n5.write_block(&self.path, &self.attr, &block_in)?;
-            Ok(())
-        } else {
-            Err(exceptions::ValueError::py_err(format!(
-                "Dataset {} does not exist!",
-                &self.path
-            )))
-        }
-    }
-}
-
-#[pyclass]
-struct DatasetU64 {
-    n5: N5Filesystem,
-    attr: DatasetAttributes,
-    path: String,
-}
-
-#[pymethods]
-impl DatasetU64 {
-    #[new]
-    fn __new__(
-        obj: &PyRawObject,
-        root_path: &str,
-        path_name: &str,
-        read_only: bool,
-    ) -> PyResult<()> {
-        // TODO: pass in optional attributes which can be used to create datasets rather
-        // than panicing when dataset does not exist
-        Ok(obj.init({
-            if read_only {
-                let n = N5Filesystem::open(root_path).unwrap();
-                let attributes = n.get_dataset_attributes(path_name).unwrap();
-                Self {
-                    n5: n,
-                    attr: attributes,
-                    path: path_name.to_string(),
-                }
-            } else {
-                let n = N5Filesystem::open_or_create(root_path).unwrap();
-                let attributes = n.get_dataset_attributes(path_name).unwrap();
-                Self {
-                    n5: n,
-                    attr: attributes,
-                    path: path_name.to_string(),
-                }
-            }
-        }))
-    }
-
-    fn read_ndarray(&self, translation: Vec<i64>, dimensions: Vec<i64>) -> PyResult<Vec<u64>> {
-        let bounding_box = BoundingBox::new(translation, dimensions);
-
-        let block_out = self
-            .n5
-            .read_ndarray::<u64>(&self.path, &self.attr, &bounding_box)
-            .unwrap();
-        Ok(block_out.into_raw_vec())
-    }
-
-    fn write_block(&self, position: Vec<i64>, data: Vec<u64>) -> PyResult<()> {
-        let block_shape = self.attr.get_block_size().to_vec();
-        let block_size = block_shape.iter().fold(1, |a, &b| a * b) as usize;
-
-        if block_size != data.len() {
-            Err(exceptions::ValueError::py_err(format!(
-                "Data has length {} but dataset {} has blocks with shape {:?} and size {}",
-                data.len(),
-                self.path,
-                block_shape,
-                block_size
-            )))
-        } else if self.n5.exists(&self.path) {
-            let block_in = VecDataBlock::new(block_shape, position, data);
-            self.n5.write_block(&self.path, &self.attr, &block_in)?;
-            Ok(())
-        } else {
-            Err(exceptions::ValueError::py_err(format!(
-                "Dataset {} does not exist!",
-                &self.path
-            )))
-        }
-    }
-}
-
-#[pyclass]
-struct DatasetI8 {
-    n5: N5Filesystem,
-    attr: DatasetAttributes,
-    path: String,
-}
-
-#[pymethods]
-impl DatasetI8 {
-    #[new]
-    fn __new__(
-        obj: &PyRawObject,
-        root_path: &str,
-        path_name: &str,
-        read_only: bool,
-    ) -> PyResult<()> {
-        // TODO: pass in optional attributes which can be used to create datasets rather
-        // than panicing when dataset does not exist
-        Ok(obj.init({
-            if read_only {
-                let n = N5Filesystem::open(root_path).unwrap();
-                let attributes = n.get_dataset_attributes(path_name).unwrap();
-                Self {
-                    n5: n,
-                    attr: attributes,
-                    path: path_name.to_string(),
-                }
-            } else {
-                let n = N5Filesystem::open_or_create(root_path).unwrap();
-                let attributes = n.get_dataset_attributes(path_name).unwrap();
-                Self {
-                    n5: n,
-                    attr: attributes,
-                    path: path_name.to_string(),
-                }
-            }
-        }))
-    }
-
-    fn read_ndarray(&self, translation: Vec<i64>, dimensions: Vec<i64>) -> PyResult<Vec<i8>> {
-        let bounding_box = BoundingBox::new(translation, dimensions);
-
-        let block_out = self
-            .n5
-            .read_ndarray::<i8>(&self.path, &self.attr, &bounding_box)
-            .unwrap();
-        Ok(block_out.into_raw_vec())
-    }
-
-    fn write_block(&self, position: Vec<i64>, data: Vec<i8>) -> PyResult<()> {
-        let block_shape = self.attr.get_block_size().to_vec();
-        let block_size = block_shape.iter().fold(1, |a, &b| a * b) as usize;
-
-        if block_size != data.len() {
-            Err(exceptions::ValueError::py_err(format!(
-                "Data has length {} but dataset {} has blocks with shape {:?} and size {}",
-                data.len(),
-                self.path,
-                block_shape,
-                block_size
-            )))
-        } else if self.n5.exists(&self.path) {
-            let block_in = VecDataBlock::new(block_shape, position, data);
-            self.n5.write_block(&self.path, &self.attr, &block_in)?;
-            Ok(())
-        } else {
-            Err(exceptions::ValueError::py_err(format!(
-                "Dataset {} does not exist!",
-                &self.path
-            )))
-        }
-    }
-}
-
-#[pyclass]
-struct DatasetI16 {
-    n5: N5Filesystem,
-    attr: DatasetAttributes,
-    path: String,
-}
-
-#[pymethods]
-impl DatasetI16 {
-    #[new]
-    fn __new__(
-        obj: &PyRawObject,
-        root_path: &str,
-        path_name: &str,
-        read_only: bool,
-    ) -> PyResult<()> {
-        // TODO: pass in optional attributes which can be used to create datasets rather
-        // than panicing when dataset does not exist
-        Ok(obj.init({
-            if read_only {
-                let n = N5Filesystem::open(root_path).unwrap();
-                let attributes = n.get_dataset_attributes(path_name).unwrap();
-                Self {
-                    n5: n,
-                    attr: attributes,
-                    path: path_name.to_string(),
-                }
-            } else {
-                let n = N5Filesystem::open_or_create(root_path).unwrap();
-                let attributes = n.get_dataset_attributes(path_name).unwrap();
-                Self {
-                    n5: n,
-                    attr: attributes,
-                    path: path_name.to_string(),
-                }
-            }
-        }))
-    }
-
-    fn read_ndarray(&self, translation: Vec<i64>, dimensions: Vec<i64>) -> PyResult<Vec<i16>> {
-        let bounding_box = BoundingBox::new(translation, dimensions);
-
-        let block_out = self
-            .n5
-            .read_ndarray::<i16>(&self.path, &self.attr, &bounding_box)
-            .unwrap();
-        Ok(block_out.into_raw_vec())
-    }
-
-    fn write_block(&self, position: Vec<i64>, data: Vec<i16>) -> PyResult<()> {
-        let block_shape = self.attr.get_block_size().to_vec();
-        let block_size = block_shape.iter().fold(1, |a, &b| a * b) as usize;
-
-        if block_size != data.len() {
-            Err(exceptions::ValueError::py_err(format!(
-                "Data has length {} but dataset {} has blocks with shape {:?} and size {}",
-                data.len(),
-                self.path,
-                block_shape,
-                block_size
-            )))
-        } else if self.n5.exists(&self.path) {
-            let block_in = VecDataBlock::new(block_shape, position, data);
-            self.n5.write_block(&self.path, &self.attr, &block_in)?;
-            Ok(())
-        } else {
-            Err(exceptions::ValueError::py_err(format!(
-                "Dataset {} does not exist!",
-                &self.path
-            )))
-        }
-    }
-}
-
-#[pyclass]
-struct DatasetI32 {
-    n5: N5Filesystem,
-    attr: DatasetAttributes,
-    path: String,
-}
-
-#[pymethods]
-impl DatasetI32 {
-    #[new]
-    fn __new__(
-        obj: &PyRawObject,
-        root_path: &str,
-        path_name: &str,
-        read_only: bool,
-    ) -> PyResult<()> {
-        // TODO: pass in optional attributes which can be used to create datasets rather
-        // than panicing when dataset does not exist
-        Ok(obj.init({
-            if read_only {
-                let n = N5Filesystem::open(root_path).unwrap();
-                let attributes = n.get_dataset_attributes(path_name).unwrap();
-                Self {
-                    n5: n,
-                    attr: attributes,
-                    path: path_name.to_string(),
-                }
-            } else {
-                let n = N5Filesystem::open_or_create(root_path).unwrap();
-                let attributes = n.get_dataset_attributes(path_name).unwrap();
-                Self {
-                    n5: n,
-                    attr: attributes,
-                    path: path_name.to_string(),
-                }
-            }
-        }))
-    }
-
-    fn read_ndarray(&self, translation: Vec<i64>, dimensions: Vec<i64>) -> PyResult<Vec<i32>> {
-        let bounding_box = BoundingBox::new(translation, dimensions);
-
-        let block_out = self
-            .n5
-            .read_ndarray::<i32>(&self.path, &self.attr, &bounding_box)
-            .unwrap();
-        Ok(block_out.into_raw_vec())
-    }
-
-    fn write_block(&self, position: Vec<i64>, data: Vec<i32>) -> PyResult<()> {
-        let block_shape = self.attr.get_block_size().to_vec();
-        let block_size = block_shape.iter().fold(1, |a, &b| a * b) as usize;
-
-        if block_size != data.len() {
-            Err(exceptions::ValueError::py_err(format!(
-                "Data has length {} but dataset {} has blocks with shape {:?} and size {}",
-                data.len(),
-                self.path,
-                block_shape,
-                block_size
-            )))
-        } else if self.n5.exists(&self.path) {
-            let block_in = VecDataBlock::new(block_shape, position, data);
-            self.n5.write_block(&self.path, &self.attr, &block_in)?;
-            Ok(())
-        } else {
-            Err(exceptions::ValueError::py_err(format!(
-                "Dataset {} does not exist!",
-                &self.path
-            )))
-        }
-    }
-}
-
-#[pyclass]
-struct DatasetI64 {
-    n5: N5Filesystem,
-    attr: DatasetAttributes,
-    path: String,
-}
-
-#[pymethods]
-impl DatasetI64 {
-    #[new]
-    fn __new__(
-        obj: &PyRawObject,
-        root_path: &str,
-        path_name: &str,
-        read_only: bool,
-    ) -> PyResult<()> {
-        // TODO: pass in optional attributes which can be used to create datasets rather
-        // than panicing when dataset does not exist
-        Ok(obj.init({
-            if read_only {
-                let n = N5Filesystem::open(root_path).unwrap();
-                let attributes = n.get_dataset_attributes(path_name).unwrap();
-                Self {
-                    n5: n,
-                    attr: attributes,
-                    path: path_name.to_string(),
-                }
-            } else {
-                let n = N5Filesystem::open_or_create(root_path).unwrap();
-                let attributes = n.get_dataset_attributes(path_name).unwrap();
-                Self {
-                    n5: n,
-                    attr: attributes,
-                    path: path_name.to_string(),
-                }
-            }
-        }))
-    }
-
-    fn read_ndarray(&self, translation: Vec<i64>, dimensions: Vec<i64>) -> PyResult<Vec<i64>> {
-        let bounding_box = BoundingBox::new(translation, dimensions);
-
-        let block_out = self
-            .n5
-            .read_ndarray::<i64>(&self.path, &self.attr, &bounding_box)
-            .unwrap();
-        Ok(block_out.into_raw_vec())
-    }
-
-    fn write_block(&self, position: Vec<i64>, data: Vec<i64>) -> PyResult<()> {
-        let block_shape = self.attr.get_block_size().to_vec();
-        let block_size = block_shape.iter().fold(1, |a, &b| a * b) as usize;
-
-        if block_size != data.len() {
-            Err(exceptions::ValueError::py_err(format!(
-                "Data has length {} but dataset {} has blocks with shape {:?} and size {}",
-                data.len(),
-                self.path,
-                block_shape,
-                block_size
-            )))
-        } else if self.n5.exists(&self.path) {
-            let block_in = VecDataBlock::new(block_shape, position, data);
-            self.n5.write_block(&self.path, &self.attr, &block_in)?;
-            Ok(())
-        } else {
-            Err(exceptions::ValueError::py_err(format!(
-                "Dataset {} does not exist!",
-                &self.path
-            )))
-        }
-    }
-}
-
-#[pyclass]
-struct DatasetF32 {
-    n5: N5Filesystem,
-    attr: DatasetAttributes,
-    path: String,
-}
-
-#[pymethods]
-impl DatasetF32 {
-    #[new]
-    fn __new__(
-        obj: &PyRawObject,
-        root_path: &str,
-        path_name: &str,
-        read_only: bool,
-    ) -> PyResult<()> {
-        // TODO: pass in optional attributes which can be used to create datasets rather
-        // than panicing when dataset does not exist
-        Ok(obj.init({
-            if read_only {
-                let n = N5Filesystem::open(root_path).unwrap();
-                let attributes = n.get_dataset_attributes(path_name).unwrap();
-                Self {
-                    n5: n,
-                    attr: attributes,
-                    path: path_name.to_string(),
-                }
-            } else {
-                let n = N5Filesystem::open_or_create(root_path).unwrap();
-                let attributes = n.get_dataset_attributes(path_name).unwrap();
-                Self {
-                    n5: n,
-                    attr: attributes,
-                    path: path_name.to_string(),
-                }
-            }
-        }))
-    }
-
-    fn read_ndarray(&self, translation: Vec<i64>, dimensions: Vec<i64>) -> PyResult<Vec<f32>> {
-        let bounding_box = BoundingBox::new(translation, dimensions);
-
-        let block_out = self
-            .n5
-            .read_ndarray::<f32>(&self.path, &self.attr, &bounding_box)
-            .unwrap();
-        Ok(block_out.into_raw_vec())
-    }
-
-    fn write_block(&self, position: Vec<i64>, data: Vec<f32>) -> PyResult<()> {
-        let block_shape = self.attr.get_block_size().to_vec();
-        let block_size = block_shape.iter().fold(1, |a, &b| a * b) as usize;
-
-        if block_size != data.len() {
-            Err(exceptions::ValueError::py_err(format!(
-                "Data has length {} but dataset {} has blocks with shape {:?} and size {}",
-                data.len(),
-                self.path,
-                block_shape,
-                block_size
-            )))
-        } else if self.n5.exists(&self.path) {
-            let block_in = VecDataBlock::new(block_shape, position, data);
-            self.n5.write_block(&self.path, &self.attr, &block_in)?;
-            Ok(())
-        } else {
-            Err(exceptions::ValueError::py_err(format!(
-                "Dataset {} does not exist!",
-                &self.path
-            )))
-        }
-    }
-}
-
-#[pyclass]
-struct DatasetF64 {
-    n5: N5Filesystem,
-    attr: DatasetAttributes,
-    path: String,
-}
-
-#[pymethods]
-impl DatasetF64 {
-    #[new]
-    fn __new__(
-        obj: &PyRawObject,
-        root_path: &str,
-        path_name: &str,
-        read_only: bool,
-    ) -> PyResult<()> {
-        // TODO: pass in optional attributes which can be used to create datasets rather
-        // than panicing when dataset does not exist
-        Ok(obj.init({
-            if read_only {
-                let n = N5Filesystem::open(root_path).unwrap();
-                let attributes = n.get_dataset_attributes(path_name).unwrap();
-                Self {
-                    n5: n,
-                    attr: attributes,
-                    path: path_name.to_string(),
-                }
-            } else {
-                let n = N5Filesystem::open_or_create(root_path).unwrap();
-                let attributes = n.get_dataset_attributes(path_name).unwrap();
-                Self {
-                    n5: n,
-                    attr: attributes,
-                    path: path_name.to_string(),
-                }
-            }
-        }))
-    }
-
-    fn read_ndarray(&self, translation: Vec<i64>, dimensions: Vec<i64>) -> PyResult<Vec<f64>> {
-        let bounding_box = BoundingBox::new(translation, dimensions);
-
-        let block_out = self
-            .n5
-            .read_ndarray::<f64>(&self.path, &self.attr, &bounding_box)
-            .unwrap();
-        Ok(block_out.into_raw_vec())
-    }
-
-    fn write_block(&self, position: Vec<i64>, data: Vec<f64>) -> PyResult<()> {
-        let block_shape = self.attr.get_block_size().to_vec();
-        let block_size = block_shape.iter().fold(1, |a, &b| a * b) as usize;
-
-        if block_size != data.len() {
-            Err(exceptions::ValueError::py_err(format!(
-                "Data has length {} but dataset {} has blocks with shape {:?} and size {}",
-                data.len(),
-                self.path,
-                block_shape,
-                block_size
-            )))
-        } else if self.n5.exists(&self.path) {
-            let block_in = VecDataBlock::new(block_shape, position, data);
-            self.n5.write_block(&self.path, &self.attr, &block_in)?;
-            Ok(())
-        } else {
-            Err(exceptions::ValueError::py_err(format!(
-                "Dataset {} does not exist!",
-                &self.path
-            )))
-        }
-    }
-}
+dataset!(DatasetU8, UINT8, u8);
+dataset!(DatasetU16, UINT16, u16);
+dataset!(DatasetU32, UINT32, u32);
+dataset!(DatasetU64, UINT64, u64);
+dataset!(DatasetI8, INT8, i8);
+dataset!(DatasetI16, INT16, i16);
+dataset!(DatasetI32, INT32, i32);
+dataset!(DatasetI64, INT64, i64);
+dataset!(DatasetF32, FLOAT32, f32);
+dataset!(DatasetF64, FLOAT64, f64);
 
 #[pymodule]
 fn libpyn5(_py: Python, m: &PyModule) -> PyResult<()> {
