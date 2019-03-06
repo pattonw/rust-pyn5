@@ -13,12 +13,12 @@ class TestU8(unittest.TestCase):
         self.dataset = "test_u8"
         self.dataset_size = [10, 10, 10]
         self.block_size = [2, 2, 2]
-        self.dtype = "u8"
+        self.dtype = "UINT8"
 
         pyn5.create_dataset(
             self.root, self.dataset, self.dataset_size, self.block_size, self.dtype
         )
-        self.n5 = pyn5.DatasetU8(self.root, self.dataset, False)
+        self.n5 = pyn5.DatasetUINT8(self.root, self.dataset, False)
 
         big = 2 ** 8
         self.working_block = [0, 1, 2, 3, big - 4, big - 3, big - 2, big - 1]
@@ -67,12 +67,12 @@ class TestU16(unittest.TestCase):
         self.dataset = "test_u16"
         self.dataset_size = [10, 10, 10]
         self.block_size = [2, 2, 2]
-        self.dtype = "u16"
+        self.dtype = "UINT16"
 
         pyn5.create_dataset(
             self.root, self.dataset, self.dataset_size, self.block_size, self.dtype
         )
-        self.n5 = pyn5.DatasetU16(self.root, self.dataset, False)
+        self.n5 = pyn5.DatasetUINT16(self.root, self.dataset, False)
 
         big = 2 ** 16
         self.working_block = [0, 1, 2, 3, big - 4, big - 3, big - 2, big - 1]
@@ -118,7 +118,7 @@ class TestU16(unittest.TestCase):
 class TestU32(unittest.TestCase):
     def setUp(self):
         self.root = "test.n5"
-        self.dtype = "u32"
+        self.dtype = "UINT32"
         self.dataset = "test_{}".format(self.dtype)
         self.dataset_size = [10, 10, 10]
         self.block_size = [2, 2, 2]
@@ -126,7 +126,7 @@ class TestU32(unittest.TestCase):
         pyn5.create_dataset(
             self.root, self.dataset, self.dataset_size, self.block_size, self.dtype
         )
-        self.n5 = pyn5.DatasetU32(self.root, self.dataset, False)
+        self.n5 = pyn5.DatasetUINT32(self.root, self.dataset, False)
 
         big = 2 ** 32
         self.working_block = [0, 1, 2, 3, big - 4, big - 3, big - 2, big - 1]
@@ -172,7 +172,7 @@ class TestU32(unittest.TestCase):
 class TestU64(unittest.TestCase):
     def setUp(self):
         self.root = "test.n5"
-        self.dtype = "u64"
+        self.dtype = "UINT64"
         self.dataset = "test_{}".format(self.dtype)
         self.dataset_size = [10, 10, 10]
         self.block_size = [2, 2, 2]
@@ -180,7 +180,7 @@ class TestU64(unittest.TestCase):
         pyn5.create_dataset(
             self.root, self.dataset, self.dataset_size, self.block_size, self.dtype
         )
-        self.n5 = pyn5.DatasetU64(self.root, self.dataset, False)
+        self.n5 = pyn5.DatasetUINT64(self.root, self.dataset, False)
 
         big = 2 ** 64
         self.working_block = [0, 1, 2, 3, big - 4, big - 3, big - 2, big - 1]
@@ -226,7 +226,7 @@ class TestU64(unittest.TestCase):
 class TestI8(unittest.TestCase):
     def setUp(self):
         self.root = "test.n5"
-        self.dtype = "i8"
+        self.dtype = "INT8"
         self.dataset = "test_{}".format(self.dtype)
         self.dataset_size = [10, 10, 10]
         self.block_size = [2, 2, 2]
@@ -234,7 +234,7 @@ class TestI8(unittest.TestCase):
         pyn5.create_dataset(
             self.root, self.dataset, self.dataset_size, self.block_size, self.dtype
         )
-        self.n5 = pyn5.DatasetI8(self.root, self.dataset, False)
+        self.n5 = pyn5.DatasetINT8(self.root, self.dataset, False)
 
         big = 2 ** 7
         self.working_block = [
@@ -298,7 +298,7 @@ class TestI8(unittest.TestCase):
 class TestI16(unittest.TestCase):
     def setUp(self):
         self.root = "test.n5"
-        self.dtype = "i16"
+        self.dtype = "INT16"
         self.dataset = "test_{}".format(self.dtype)
         self.dataset_size = [10, 10, 10]
         self.block_size = [2, 2, 2]
@@ -306,7 +306,7 @@ class TestI16(unittest.TestCase):
         pyn5.create_dataset(
             self.root, self.dataset, self.dataset_size, self.block_size, self.dtype
         )
-        self.n5 = pyn5.DatasetI16(self.root, self.dataset, False)
+        self.n5 = pyn5.DatasetINT16(self.root, self.dataset, False)
 
         big = 2 ** 15
         self.working_block = [
@@ -370,7 +370,7 @@ class TestI16(unittest.TestCase):
 class TestI32(unittest.TestCase):
     def setUp(self):
         self.root = "test.n5"
-        self.dtype = "i32"
+        self.dtype = "INT32"
         self.dataset = "test_{}".format(self.dtype)
         self.dataset_size = [10, 10, 10]
         self.block_size = [2, 2, 2]
@@ -378,7 +378,7 @@ class TestI32(unittest.TestCase):
         pyn5.create_dataset(
             self.root, self.dataset, self.dataset_size, self.block_size, self.dtype
         )
-        self.n5 = pyn5.DatasetI32(self.root, self.dataset, False)
+        self.n5 = pyn5.DatasetINT32(self.root, self.dataset, False)
 
         big = 2 ** 31
         self.working_block = [
@@ -442,7 +442,7 @@ class TestI32(unittest.TestCase):
 class TestI64(unittest.TestCase):
     def setUp(self):
         self.root = "test.n5"
-        self.dtype = "i64"
+        self.dtype = "INT64"
         self.dataset = "test_{}".format(self.dtype)
         self.dataset_size = [10, 10, 10]
         self.block_size = [2, 2, 2]
@@ -450,7 +450,7 @@ class TestI64(unittest.TestCase):
         pyn5.create_dataset(
             self.root, self.dataset, self.dataset_size, self.block_size, self.dtype
         )
-        self.n5 = pyn5.DatasetI64(self.root, self.dataset, False)
+        self.n5 = pyn5.DatasetINT64(self.root, self.dataset, False)
 
         big = 2 ** 63
         self.working_block = [
@@ -514,7 +514,7 @@ class TestI64(unittest.TestCase):
 class TestF32(unittest.TestCase):
     def setUp(self):
         self.root = "test.n5"
-        self.dtype = "f32"
+        self.dtype = "FLOAT32"
         self.dataset = "test_{}".format(self.dtype)
         self.dataset_size = [10, 10, 10]
         self.block_size = [2, 2, 2]
@@ -522,7 +522,7 @@ class TestF32(unittest.TestCase):
         pyn5.create_dataset(
             self.root, self.dataset, self.dataset_size, self.block_size, self.dtype
         )
-        self.n5 = pyn5.DatasetF32(self.root, self.dataset, False)
+        self.n5 = pyn5.DatasetFLOAT32(self.root, self.dataset, False)
 
         self.working_block = [
             -3.3999999521443642e38,
@@ -571,7 +571,7 @@ class TestF32(unittest.TestCase):
 class TestF64(unittest.TestCase):
     def setUp(self):
         self.root = "test.n5"
-        self.dtype = "f64"
+        self.dtype = "FLOAT64"
         self.dataset = "test_{}".format(self.dtype)
         self.dataset_size = [10, 10, 10]
         self.block_size = [2, 2, 2]
@@ -579,7 +579,7 @@ class TestF64(unittest.TestCase):
         pyn5.create_dataset(
             self.root, self.dataset, self.dataset_size, self.block_size, self.dtype
         )
-        self.n5 = pyn5.DatasetF64(self.root, self.dataset, False)
+        self.n5 = pyn5.DatasetFLOAT64(self.root, self.dataset, False)
 
         self.working_block = [
             -2.3e-308,
