@@ -1,108 +1,625 @@
-import target.debug.libpyn5 as pyn5
 from pathlib import Path
 import shutil
-from typing import NamedTuple, Optional
+import unittest
+import numpy as np
 
 
-class Result(NamedTuple):
-    passed: bool
-    msg: Optional[str]
-
-    def __str__(self):
-        return "{}; {}".format("PASSED" if self.passed else "FAILED", self.msg)
+import target.debug.libpyn5 as pyn5
 
 
-def setup_dataset() -> pyn5.Dataset:
-    dataset = Path("test.n5")
-    if dataset.is_dir():
-        shutil.rmtree(dataset)
-    pyn5.create_dataset("test.n5", "test", [10, 10, 10], [2, 2, 2])
-    return pyn5.Dataset("test.n5", "test", False)
+class TestU8(unittest.TestCase):
+    def setUp(self):
+        self.root = "test.n5"
+        self.dataset = "test_u8"
+        self.dataset_size = [10, 10, 10]
+        self.block_size = [2, 2, 2]
+        self.dtype = "u8"
 
+        pyn5.create_dataset(
+            self.root, self.dataset, self.dataset_size, self.block_size, self.dtype
+        )
+        self.n5 = pyn5.DatasetU8(self.root, self.dataset, False)
 
-def test_write_not_enough_data() -> Result:
-    test = setup_dataset()
-    try:
-        test.write_block([0, 0, 0], [0, 1, 2, 3])
-        return Result(False, "Allowed writing block with 4 values instead of 8!")
-    except ValueError as e:
-        return Result(True, str(e))
+        big = 2 ** 8
+        self.working_block = [0, 1, 2, 3, big - 4, big - 3, big - 2, big - 1]
+        self.out_of_bounds_block = [-1, -2, -3, -4, big, big + 1, big + 2, big + 3]
+        self.wrong_dtype = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
 
+    def tearDown(self):
+        if Path(self.root, self.dataset).is_dir():
+            shutil.rmtree(Path(self.root, self.dataset))
 
-def test_write_too_much_data() -> Result:
-    test = setup_dataset()
-    try:
-        test.write_block([0, 0, 0], [0, 1, 2, 3, 4, 5, 6, 7, 7, 6, 5, 4, 3, 2, 1, 0])
-        return Result(False, "Allowed writing block with 16 values instead of 8!")
-    except ValueError as e:
-        return Result(True, str(e))
+    def test_read_write(self):
+        # Dataset should start empty
+        self.assertEqual(
+            self.n5.read_ndarray([0, 0, 0], self.dataset_size),
+            [0] * np.prod(self.dataset_size),
+        )
+        # Test writing a valid block
+        self.n5.write_block([0, 0, 0], self.working_block)
+        self.assertEqual(
+            self.n5.read_ndarray([0, 0, 0], self.block_size), self.working_block
+        )
 
-
-def test_write_to_negative_block_index() -> Result:
-    test = setup_dataset()
-    data = [0, 1, 2, 3, 4, 5, 6, 7]
-    try:
-        test.write_block([-1, -1, -1], data)
+        # Test writing overflow block
         try:
-            test.read_ndarray([-2, -2, -2], [2, 2, 2])
-            return Result(
-                False, "Allowed writing and reading of blocks with negative indicies"
+            self.n5.write_block([1, 1, 1], self.out_of_bounds_block)
+            raise AssertionError("Expected OverflowError")
+        except OverflowError:
+            self.assertEqual(
+                self.n5.read_ndarray([2, 2, 2], self.block_size),
+                [0] * np.prod(self.block_size),
             )
-        except Exception:
-            return Result(
-                False,
-                "Allowed writing but not reading of blocks with negative indicies",
-            )
-    except Exception as e:
-        return Result(True, str(e))
-
-
-def test_write_above_block_bounds() -> Result:
-    test = setup_dataset()
-    try:
-        data = [0, 1, 2, 3, 4, 5, 6, 7]
-        test.write_block([11, 11, 11], data)
+        # Test writing invalid type block
         try:
-            test.read_ndarray([22, 22, 22], [2, 2, 2])
-            return Result(
-                False, "Allowed writing and reading of blocks outside boundaries"
+            self.n5.write_block([2, 2, 2], self.wrong_dtype)
+            raise AssertionError("Expected TypeError")
+        except TypeError:
+            self.assertEqual(
+                self.n5.read_ndarray([4, 4, 4], self.block_size),
+                [0] * np.prod(self.block_size),
             )
-        except Exception:
-            return Result(
-                False, "Allowed writing but not reading of blocks outside boundaries"
-            )
-    except Exception as e:
-        return Result(True, str(e))
 
 
-def test_write_and_read() -> Result:
-    test = setup_dataset()
-    data = [0, 1, 2, 3, 4, 5, 6, 7]
-    test.write_block([0, 0, 0], data)
-    try:
-        assert data == test.read_ndarray(
-            [0, 0, 0], [2, 2, 2]
-        ), "read data does not match expected output"
-    except AssertionError as e:
-        return Result(False, str(e))
-    for i in range(8):
-        # first coordinate first
-        x = (i >> 0) % 2
-        y = (i >> 1) % 2
-        z = (i >> 2) % 2
+class TestU16(unittest.TestCase):
+    def setUp(self):
+        self.root = "test.n5"
+        self.dataset = "test_u16"
+        self.dataset_size = [10, 10, 10]
+        self.block_size = [2, 2, 2]
+        self.dtype = "u16"
+
+        pyn5.create_dataset(
+            self.root, self.dataset, self.dataset_size, self.block_size, self.dtype
+        )
+        self.n5 = pyn5.DatasetU16(self.root, self.dataset, False)
+
+        big = 2 ** 16
+        self.working_block = [0, 1, 2, 3, big - 4, big - 3, big - 2, big - 1]
+        self.out_of_bounds_block = [-1, -2, -3, -4, big, big + 1, big + 2, big + 3]
+        self.wrong_dtype = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
+
+    def tearDown(self):
+        if Path(self.root, self.dataset).is_dir():
+            shutil.rmtree(Path(self.root, self.dataset))
+
+    def test_read_write(self):
+        # Dataset should start empty
+        self.assertEqual(
+            self.n5.read_ndarray([0, 0, 0], self.dataset_size),
+            [0] * np.prod(self.dataset_size),
+        )
+        # Test writing a valid block
+        self.n5.write_block([0, 0, 0], self.working_block)
+        self.assertEqual(
+            self.n5.read_ndarray([0, 0, 0], self.block_size), self.working_block
+        )
+
+        # Test writing overflow block
         try:
-            assert (
-                data[i] == test.read_ndarray([x, y, z], [1, 1, 1])[0]
-            ), "found {}, expected {} at ({},{},{})".format(
-                test.read_ndarray([x, y, z], [1, 1, 1])[0], data[i], x, y, z
+            self.n5.write_block([1, 1, 1], self.out_of_bounds_block)
+            raise AssertionError("Expected OverflowError")
+        except OverflowError:
+            self.assertEqual(
+                self.n5.read_ndarray([2, 2, 2], self.block_size),
+                [0] * np.prod(self.block_size),
             )
-        except AssertionError as e:
-            return Result(False, str(e))
-    return Result(True, None)
+        # Test writing invalid type block
+        try:
+            self.n5.write_block([2, 2, 2], self.wrong_dtype)
+            raise AssertionError("Expected TypeError")
+        except TypeError:
+            self.assertEqual(
+                self.n5.read_ndarray([4, 4, 4], self.block_size),
+                [0] * np.prod(self.block_size),
+            )
 
 
-print(test_write_not_enough_data())
-print(test_write_too_much_data())
-print(test_write_to_negative_block_index())
-print(test_write_above_block_bounds())
-print(test_write_and_read())
+class TestU32(unittest.TestCase):
+    def setUp(self):
+        self.root = "test.n5"
+        self.dtype = "u32"
+        self.dataset = "test_{}".format(self.dtype)
+        self.dataset_size = [10, 10, 10]
+        self.block_size = [2, 2, 2]
+
+        pyn5.create_dataset(
+            self.root, self.dataset, self.dataset_size, self.block_size, self.dtype
+        )
+        self.n5 = pyn5.DatasetU32(self.root, self.dataset, False)
+
+        big = 2 ** 32
+        self.working_block = [0, 1, 2, 3, big - 4, big - 3, big - 2, big - 1]
+        self.out_of_bounds_block = [-1, -2, -3, -4, big, big + 1, big + 2, big + 3]
+        self.wrong_dtype = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
+
+    def tearDown(self):
+        if Path(self.root, self.dataset).is_dir():
+            shutil.rmtree(Path(self.root, self.dataset))
+
+    def test_read_write(self):
+        # Dataset should start empty
+        self.assertEqual(
+            self.n5.read_ndarray([0, 0, 0], self.dataset_size),
+            [0] * np.prod(self.dataset_size),
+        )
+        # Test writing a valid block
+        self.n5.write_block([0, 0, 0], self.working_block)
+        self.assertEqual(
+            self.n5.read_ndarray([0, 0, 0], self.block_size), self.working_block
+        )
+
+        # Test writing overflow block
+        try:
+            self.n5.write_block([1, 1, 1], self.out_of_bounds_block)
+            raise AssertionError("Expected OverflowError")
+        except OverflowError:
+            self.assertEqual(
+                self.n5.read_ndarray([2, 2, 2], self.block_size),
+                [0] * np.prod(self.block_size),
+            )
+        # Test writing invalid type block
+        try:
+            self.n5.write_block([2, 2, 2], self.wrong_dtype)
+            raise AssertionError("Expected TypeError")
+        except TypeError:
+            self.assertEqual(
+                self.n5.read_ndarray([4, 4, 4], self.block_size),
+                [0] * np.prod(self.block_size),
+            )
+
+
+class TestU64(unittest.TestCase):
+    def setUp(self):
+        self.root = "test.n5"
+        self.dtype = "u64"
+        self.dataset = "test_{}".format(self.dtype)
+        self.dataset_size = [10, 10, 10]
+        self.block_size = [2, 2, 2]
+
+        pyn5.create_dataset(
+            self.root, self.dataset, self.dataset_size, self.block_size, self.dtype
+        )
+        self.n5 = pyn5.DatasetU64(self.root, self.dataset, False)
+
+        big = 2 ** 64
+        self.working_block = [0, 1, 2, 3, big - 4, big - 3, big - 2, big - 1]
+        self.out_of_bounds_block = [-1, -2, -3, -4, big, big + 1, big + 2, big + 3]
+        self.wrong_dtype = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
+
+    def tearDown(self):
+        if Path(self.root, self.dataset).is_dir():
+            shutil.rmtree(Path(self.root, self.dataset))
+
+    def test_read_write(self):
+        # Dataset should start empty
+        self.assertEqual(
+            self.n5.read_ndarray([0, 0, 0], self.dataset_size),
+            [0] * np.prod(self.dataset_size),
+        )
+        # Test writing a valid block
+        self.n5.write_block([0, 0, 0], self.working_block)
+        self.assertEqual(
+            self.n5.read_ndarray([0, 0, 0], self.block_size), self.working_block
+        )
+
+        # Test writing overflow block
+        try:
+            self.n5.write_block([1, 1, 1], self.out_of_bounds_block)
+            raise AssertionError("Expected OverflowError")
+        except OverflowError:
+            self.assertEqual(
+                self.n5.read_ndarray([2, 2, 2], self.block_size),
+                [0] * np.prod(self.block_size),
+            )
+        # Test writing invalid type block
+        try:
+            self.n5.write_block([2, 2, 2], self.wrong_dtype)
+            raise AssertionError("Expected TypeError")
+        except TypeError:
+            self.assertEqual(
+                self.n5.read_ndarray([4, 4, 4], self.block_size),
+                [0] * np.prod(self.block_size),
+            )
+
+
+class TestI8(unittest.TestCase):
+    def setUp(self):
+        self.root = "test.n5"
+        self.dtype = "i8"
+        self.dataset = "test_{}".format(self.dtype)
+        self.dataset_size = [10, 10, 10]
+        self.block_size = [2, 2, 2]
+
+        pyn5.create_dataset(
+            self.root, self.dataset, self.dataset_size, self.block_size, self.dtype
+        )
+        self.n5 = pyn5.DatasetI8(self.root, self.dataset, False)
+
+        big = 2 ** 7
+        self.working_block = [
+            1 - big,
+            2 - big,
+            3 - big,
+            4 - big,
+            big - 4,
+            big - 3,
+            big - 2,
+            big - 1,
+        ]
+        self.out_of_bounds_block = [
+            -big,
+            -1 - big,
+            -2 - big,
+            -3 - big,
+            big,
+            big + 1,
+            big + 2,
+            big + 3,
+        ]
+        self.wrong_dtype = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
+
+    def tearDown(self):
+        if Path(self.root, self.dataset).is_dir():
+            shutil.rmtree(Path(self.root, self.dataset))
+
+    def test_read_write(self):
+        # Dataset should start empty
+        self.assertEqual(
+            self.n5.read_ndarray([0, 0, 0], self.dataset_size),
+            [0] * np.prod(self.dataset_size),
+        )
+        # Test writing a valid block
+        self.n5.write_block([0, 0, 0], self.working_block)
+        self.assertEqual(
+            self.n5.read_ndarray([0, 0, 0], self.block_size), self.working_block
+        )
+
+        # Test writing overflow block
+        try:
+            self.n5.write_block([1, 1, 1], self.out_of_bounds_block)
+            raise AssertionError("Expected OverflowError")
+        except OverflowError:
+            self.assertEqual(
+                self.n5.read_ndarray([2, 2, 2], self.block_size),
+                [0] * np.prod(self.block_size),
+            )
+        # Test writing invalid type block
+        try:
+            self.n5.write_block([2, 2, 2], self.wrong_dtype)
+            raise AssertionError("Expected TypeError")
+        except TypeError:
+            self.assertEqual(
+                self.n5.read_ndarray([4, 4, 4], self.block_size),
+                [0] * np.prod(self.block_size),
+            )
+
+
+class TestI16(unittest.TestCase):
+    def setUp(self):
+        self.root = "test.n5"
+        self.dtype = "i16"
+        self.dataset = "test_{}".format(self.dtype)
+        self.dataset_size = [10, 10, 10]
+        self.block_size = [2, 2, 2]
+
+        pyn5.create_dataset(
+            self.root, self.dataset, self.dataset_size, self.block_size, self.dtype
+        )
+        self.n5 = pyn5.DatasetI16(self.root, self.dataset, False)
+
+        big = 2 ** 15
+        self.working_block = [
+            1 - big,
+            2 - big,
+            3 - big,
+            4 - big,
+            big - 4,
+            big - 3,
+            big - 2,
+            big - 1,
+        ]
+        self.out_of_bounds_block = [
+            -big,
+            -1 - big,
+            -2 - big,
+            -3 - big,
+            big,
+            big + 1,
+            big + 2,
+            big + 3,
+        ]
+        self.wrong_dtype = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
+
+    def tearDown(self):
+        if Path(self.root, self.dataset).is_dir():
+            shutil.rmtree(Path(self.root, self.dataset))
+
+    def test_read_write(self):
+        # Dataset should start empty
+        self.assertEqual(
+            self.n5.read_ndarray([0, 0, 0], self.dataset_size),
+            [0] * np.prod(self.dataset_size),
+        )
+        # Test writing a valid block
+        self.n5.write_block([0, 0, 0], self.working_block)
+        self.assertEqual(
+            self.n5.read_ndarray([0, 0, 0], self.block_size), self.working_block
+        )
+
+        # Test writing overflow block
+        try:
+            self.n5.write_block([1, 1, 1], self.out_of_bounds_block)
+            raise AssertionError("Expected OverflowError")
+        except OverflowError:
+            self.assertEqual(
+                self.n5.read_ndarray([2, 2, 2], self.block_size),
+                [0] * np.prod(self.block_size),
+            )
+        # Test writing invalid type block
+        try:
+            self.n5.write_block([2, 2, 2], self.wrong_dtype)
+            raise AssertionError("Expected TypeError")
+        except TypeError:
+            self.assertEqual(
+                self.n5.read_ndarray([4, 4, 4], self.block_size),
+                [0] * np.prod(self.block_size),
+            )
+
+
+class TestI32(unittest.TestCase):
+    def setUp(self):
+        self.root = "test.n5"
+        self.dtype = "i32"
+        self.dataset = "test_{}".format(self.dtype)
+        self.dataset_size = [10, 10, 10]
+        self.block_size = [2, 2, 2]
+
+        pyn5.create_dataset(
+            self.root, self.dataset, self.dataset_size, self.block_size, self.dtype
+        )
+        self.n5 = pyn5.DatasetI32(self.root, self.dataset, False)
+
+        big = 2 ** 31
+        self.working_block = [
+            1 - big,
+            2 - big,
+            3 - big,
+            4 - big,
+            big - 4,
+            big - 3,
+            big - 2,
+            big - 1,
+        ]
+        self.out_of_bounds_block = [
+            -big,
+            -1 - big,
+            -2 - big,
+            -3 - big,
+            big,
+            big + 1,
+            big + 2,
+            big + 3,
+        ]
+        self.wrong_dtype = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
+
+    def tearDown(self):
+        if Path(self.root, self.dataset).is_dir():
+            shutil.rmtree(Path(self.root, self.dataset))
+
+    def test_read_write(self):
+        # Dataset should start empty
+        self.assertEqual(
+            self.n5.read_ndarray([0, 0, 0], self.dataset_size),
+            [0] * np.prod(self.dataset_size),
+        )
+        # Test writing a valid block
+        self.n5.write_block([0, 0, 0], self.working_block)
+        self.assertEqual(
+            self.n5.read_ndarray([0, 0, 0], self.block_size), self.working_block
+        )
+
+        # Test writing overflow block
+        try:
+            self.n5.write_block([1, 1, 1], self.out_of_bounds_block)
+            raise AssertionError("Expected OverflowError")
+        except OverflowError:
+            self.assertEqual(
+                self.n5.read_ndarray([2, 2, 2], self.block_size),
+                [0] * np.prod(self.block_size),
+            )
+        # Test writing invalid type block
+        try:
+            self.n5.write_block([2, 2, 2], self.wrong_dtype)
+            raise AssertionError("Expected TypeError")
+        except TypeError:
+            self.assertEqual(
+                self.n5.read_ndarray([4, 4, 4], self.block_size),
+                [0] * np.prod(self.block_size),
+            )
+
+
+class TestI64(unittest.TestCase):
+    def setUp(self):
+        self.root = "test.n5"
+        self.dtype = "i64"
+        self.dataset = "test_{}".format(self.dtype)
+        self.dataset_size = [10, 10, 10]
+        self.block_size = [2, 2, 2]
+
+        pyn5.create_dataset(
+            self.root, self.dataset, self.dataset_size, self.block_size, self.dtype
+        )
+        self.n5 = pyn5.DatasetI64(self.root, self.dataset, False)
+
+        big = 2 ** 63
+        self.working_block = [
+            1 - big,
+            2 - big,
+            3 - big,
+            4 - big,
+            big - 4,
+            big - 3,
+            big - 2,
+            big - 1,
+        ]
+        self.out_of_bounds_block = [
+            -big,
+            -1 - big,
+            -2 - big,
+            -3 - big,
+            big,
+            big + 1,
+            big + 2,
+            big + 3,
+        ]
+        self.wrong_dtype = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
+
+    def tearDown(self):
+        if Path(self.root, self.dataset).is_dir():
+            shutil.rmtree(Path(self.root, self.dataset))
+
+    def test_read_write(self):
+        # Dataset should start empty
+        self.assertEqual(
+            self.n5.read_ndarray([0, 0, 0], self.dataset_size),
+            [0] * np.prod(self.dataset_size),
+        )
+        # Test writing a valid block
+        self.n5.write_block([0, 0, 0], self.working_block)
+        self.assertEqual(
+            self.n5.read_ndarray([0, 0, 0], self.block_size), self.working_block
+        )
+
+        # Test writing overflow block
+        try:
+            self.n5.write_block([1, 1, 1], self.out_of_bounds_block)
+            raise AssertionError("Expected OverflowError")
+        except OverflowError:
+            self.assertEqual(
+                self.n5.read_ndarray([2, 2, 2], self.block_size),
+                [0] * np.prod(self.block_size),
+            )
+        # Test writing invalid type block
+        try:
+            self.n5.write_block([2, 2, 2], self.wrong_dtype)
+            raise AssertionError("Expected TypeError")
+        except TypeError:
+            self.assertEqual(
+                self.n5.read_ndarray([4, 4, 4], self.block_size),
+                [0] * np.prod(self.block_size),
+            )
+
+
+class TestF32(unittest.TestCase):
+    def setUp(self):
+        self.root = "test.n5"
+        self.dtype = "f32"
+        self.dataset = "test_{}".format(self.dtype)
+        self.dataset_size = [10, 10, 10]
+        self.block_size = [2, 2, 2]
+
+        pyn5.create_dataset(
+            self.root, self.dataset, self.dataset_size, self.block_size, self.dtype
+        )
+        self.n5 = pyn5.DatasetF32(self.root, self.dataset, False)
+
+        self.working_block = [
+            -3.3999999521443642e38,
+            -1.199999978106707e-38,
+            1.199999978106707e-38,
+            3.3999999521443642e38,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+        ]
+
+        big = 1.5e40
+        self.out_of_bounds_block = [
+            -big,
+            -1 - big,
+            -2 - big,
+            -3 - big,
+            big,
+            big + 1,
+            big + 2,
+            big + 3,
+        ]
+        self.wrong_dtype = [1, 2, 3, 4, 5, 6, 7, 8]
+
+    def tearDown(self):
+        if Path(self.root, self.dataset).is_dir():
+            shutil.rmtree(Path(self.root, self.dataset))
+
+    def test_read_write_valid(self):
+        # Dataset should start empty
+        self.assertEqual(
+            self.n5.read_ndarray([0, 0, 0], self.dataset_size),
+            [0] * np.prod(self.dataset_size),
+        )
+        # Test writing a valid block
+        self.n5.write_block([0, 0, 0], list(self.working_block))
+        self.assertEqual(
+            self.n5.read_ndarray([0, 0, 0], self.block_size), self.working_block
+        )
+
+    def test_read_write_expected_failures(self):
+        self.fail("Not yet implemented")
+
+
+class TestF64(unittest.TestCase):
+    def setUp(self):
+        self.root = "test.n5"
+        self.dtype = "f64"
+        self.dataset = "test_{}".format(self.dtype)
+        self.dataset_size = [10, 10, 10]
+        self.block_size = [2, 2, 2]
+
+        pyn5.create_dataset(
+            self.root, self.dataset, self.dataset_size, self.block_size, self.dtype
+        )
+        self.n5 = pyn5.DatasetF64(self.root, self.dataset, False)
+
+        self.working_block = [
+            -2.3e-308,
+            -1.7e308,
+            1.7e308,
+            2.3e-308,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+        ]
+
+        big = 1.5e600
+        self.out_of_bounds_block = [
+            -big,
+            -1 - big,
+            -2 - big,
+            -3 - big,
+            big,
+            big + 1,
+            big + 2,
+            big + 3,
+        ]
+        self.wrong_dtype = [1, 2, 3, 4, 5, 6, 7, 8]
+
+    def tearDown(self):
+        if Path(self.root, self.dataset).is_dir():
+            shutil.rmtree(Path(self.root, self.dataset))
+
+    def test_read_write(self):
+        # Dataset should start empty
+        self.assertEqual(
+            self.n5.read_ndarray([0, 0, 0], self.dataset_size),
+            [0] * np.prod(self.dataset_size),
+        )
+        # Test writing a valid block
+        self.n5.write_block([0, 0, 0], self.working_block)
+        self.assertEqual(
+            self.n5.read_ndarray([0, 0, 0], self.block_size), self.working_block
+        )
+
+    def test_read_write_expected_failures(self):
+        self.fail("Not yet implemented")
