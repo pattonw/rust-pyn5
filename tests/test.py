@@ -29,21 +29,33 @@ class BaseTestCase:
                 self.n5.read_ndarray([0, 0, 0], self.block_size), self.valid_block
             )
 
-        @unittest.expectedFailure
         def test_read_write_overflow(self):
             """
             Doesn't work properly for float types since floats that are too
             large get converted to inf
             """
-            self.n5.write_block([1, 1, 1], self.overflow_block)
+            try:
+                self.n5.write_block([1, 1, 1], self.overflow_block)
+                raise AssertionError("Expected OverflowError")
+            except OverflowError:
+                self.assertEqual(
+                    self.n5.read_ndarray([2, 2, 2], self.block_size),
+                    [0] * np.prod(self.block_size),
+                )
 
-        @unittest.expectedFailure
         def test_read_write_wrong_dtype(self):
             """
             Doesn't work properly for float types since I'm guessing ints
             get converted to float types somewhere between python and rust
             """
-            self.n5.write_block([2, 2, 2], self.wrong_dtype_block)
+            try:
+                self.n5.write_block([2, 2, 2], self.wrong_dtype_block)
+                raise AssertionError("Expected TypeError")
+            except TypeError:
+                self.assertEqual(
+                    self.n5.read_ndarray([4, 4, 4], self.block_size),
+                    [0] * np.prod(self.block_size),
+                )
 
 
 class TestU8(BaseTestCase.BaseTest):
@@ -252,24 +264,12 @@ class TestF32(BaseTestCase.BaseTest):
 
         super().setUp()
 
-    def test_read_write_expected_failures(self):
-        self.fail("Not yet implemented")
-
 
 class TestF64(BaseTestCase.BaseTest):
     def setUp(self):
         self.dtype = "FLOAT64"
 
-        self.valid_block = [
-            -2.3e-308,
-            -1.7e308,
-            1.7e308,
-            2.3e-308,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-        ]
+        self.valid_block = [-2.3e-308, -1.7e308, 1.7e308, 2.3e-308, 0.0, 0.0, 0.0, 0.0]
 
         big = 1.5e600
         self.overflow_block = [
@@ -285,6 +285,3 @@ class TestF64(BaseTestCase.BaseTest):
         self.wrong_dtype_block = [1, 2, 3, 4, 5, 6, 7, 8]
 
         super().setUp()
-
-    def test_read_write_expected_failures(self):
-        self.fail("Not yet implemented")
