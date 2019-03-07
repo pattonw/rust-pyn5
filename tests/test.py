@@ -7,7 +7,7 @@ import pyn5
 
 
 class BaseTestCase:
-    class IntBaseTest(unittest.TestCase):
+    class BaseTest(unittest.TestCase):
         def setUp(self):
             self.root = "test.n5"
             self.dataset = "test_{}".format(self.dtype)
