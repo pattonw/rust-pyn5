@@ -285,3 +285,68 @@ class TestF64(BaseTestCase.BaseTest):
         self.wrong_dtype_block = [1, 2, 3, 4, 5, 6, 7, 8]
 
         super().setUp()
+
+
+class TestPythonReadWrite(unittest.TestCase):
+    def setUp(self):
+        self.root = "test.n5"
+        self.dataset = "test"
+        self.dtype = "UINT8"
+        self.dataset_size = [10, 10, 10]
+        self.block_size = [2, 2, 2]
+
+        pyn5.create_dataset(
+            self.root, self.dataset, self.dataset_size, self.block_size, self.dtype
+        )
+        self.n5 = pyn5.open(self.root, self.dataset, self.dtype, False)
+
+    def tearDown(self):
+        if Path(self.root, self.dataset).is_dir():
+            shutil.rmtree(Path(self.root, self.dataset))
+
+    def test_read_write(self):
+        # make sure n5 is initialized to all zeros
+        self.assertTrue(
+            np.array_equal(
+                pyn5.read(self.n5, (np.array([0, 0, 0]), np.array(self.dataset_size))),
+                np.zeros([10, 10, 10]),
+            )
+        )
+
+        # write ones to whole dataset, and then
+        # write on partial blocks to make sure data isn't overwritten
+        pyn5.write(
+            self.n5,
+            (np.array([0, 0, 0]), np.array(self.dataset_size)),
+            np.ones(self.dataset_size),
+        )
+        self.assertTrue(
+            np.array_equal(
+                pyn5.read(self.n5, (np.array([0, 0, 0]), np.array(self.dataset_size))),
+                np.ones([10, 10, 10]),
+            )
+        )
+
+        pyn5.write(
+            self.n5, (np.array([1, 1, 1]), np.array([3, 3, 3])), np.ones([2, 2, 2]) * 2
+        )
+        self.assertTrue(
+            np.array_equal(
+                pyn5.read(self.n5, (np.array([1, 1, 1]), np.array([3, 3, 3]))),
+                np.ones([2, 2, 2]) * 2,
+            )
+        )
+
+        # test writting non-uniform block to make sure axis orderings are correct
+        pyn5.write(
+            self.n5,
+            (np.array([1, 1, 1]), np.array([5, 5, 5])),
+            np.array(range(64), dtype=int).reshape([4, 4, 4]),
+        )
+        self.assertTrue(
+            np.array_equal(
+                pyn5.read(self.n5, (np.array([1, 1, 1]), np.array([5, 5, 5]))),
+                np.array(range(64), dtype=int).reshape([4, 4, 4]),
+            )
+        )
+

@@ -176,6 +176,11 @@ macro_rules! dataset {
                 }))
             }
 
+            #[getter]
+            fn block_shape(&self) -> PyResult<(Vec<i32>)> {
+                Ok(self.attr.get_block_size().iter().cloned().collect())
+            }
+
             fn read_ndarray(
                 &self,
                 translation: Vec<i64>,
