@@ -2,23 +2,33 @@ language: python
 python:
 - 3.6
 - 3.5
-
 matrix:
-  - include:
+  include:
     - sudo: required
       services:
         - docker
-      env: DOCKER_IMAGE=quay.io/pypa/manylinux1_x86_64
+      env:
+        - CIBW_SKIP=*manylinux1_i686*
+        - PIP=pip
+        - PYTHON=python
     - sudo: required
       services:
         - docker
-      env: DOCKER_IMAGE=quay.io/pypa/manylinux1_i686
-          PRE_CMD=linux32
+      env:
+        - CIBW_SKIP=*manylinux1_x86_64*
+        - PIP=pip
+        - PYTHON=python
+    - os: osx
+      language: generic
+      env:
+        - PIP=pip2
+        - PYTHON=python2
 env:
   global:
   - TRAVIS_RUST_VERSION=nightly
   - RUST_BACKTRACE=1
   - TWINE_USERNAME=pattonw
+  - TWINE_PASSWORD=ZA8aIvBN2uVm74hOVcVuIUm1bw36Chd8SnmsWrlvmV13BQFDkTbQNN7RIKEjcfBfMso5xHp9O+1KpoIWvXUtrfvaBmlL29VJiyW/E05NL9em7i2kWSX8W5K3bOB8cM/1duQifupWqSYgBSDGvncecAhoPcKceZ+jPG0ZKN8VlTypnuul97ny/FgtXmmFj8lPQYdSASS37Eern+tLxvFEWh4j2Q1bXbPb4ZYNrvJuB1GKeqozGoAEwDq5a6+mAKz6vni4jSL0asIJkk85cKxCI0pNZIA6JtZtbfgbTPTpUWS4ZHvpA9V92B1kODCW3qmASqbR0lV/xRLkBWcHl/77qh+z1hK35ySCvrGKV7eDX/zQ6SPtYuu99+moN9fTVpG8zHNJC8XzYGbJe2frOHFPoUVdT/pVnHdHYoMWMgLjqfs3mUmu+uwl3PSrtRXhcFR3W2wtQ+wG4fWsN+jrJbVXzi4Hlx58Nsbg4ZwyH9yH7n9e2PoqvSbZoR7IPnMsE88+w5vN/TtCmJ0l8p7RwOKJeEpTFJ92HINfXOcdUarIHkjrWiHA4GI4StezsFkcrDNgkCnOCM6Ux2HOBuF4hoWMhi2B0nBpWVD4GUabMCXielykL1LcaX1ZK+p8/sqylkptfXSi8QB5qeSjrAVrrReSv1GejjHKkYKBQO1Qn8sW858=
 addons:
   apt:
     packages:
@@ -31,16 +41,15 @@ addons:
     - libiberty-dev
 before_install:
 - source ./ci/travis/setup.sh
-install: 
-  - docker pull $DOCKER_IMAGE
-  - pip install -U tox-travis cibuildwheel setuptools_rust
-
+install:
+- pip install -U tox-travis cibuildwheel setuptools_rust
 script:
+- tox
+- export CIBW_SKIP=cp34-*\ $CIBW_SKIP
 - cibuildwheel --output-dir wheelhouse
-- |
+- |-
   if [[ $TRAVIS_TAG ]]; then
     pip install twine
     python -m twine upload wheelhouse/*.whl
   fi
 
-  tox
