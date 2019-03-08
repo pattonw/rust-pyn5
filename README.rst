@@ -7,7 +7,7 @@ pyn5
         :target: https://pypi.python.org/pypi/pyn5
 
 .. image:: https://img.shields.io/travis/pattonw/pyn5.svg
-        :target: https://travis-ci.org/pattonw/pyn5
+        :target: https://travis-ci.org/pattonw/rust-pyn5
 
 .. image:: https://readthedocs.org/projects/pyn5/badge/?version=latest
         :target: https://pyn5.readthedocs.io/en/latest/?badge=latest
