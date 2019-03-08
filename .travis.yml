@@ -4,13 +4,3 @@ python:
 - 3.5
 install: pip install -U tox-travis
 script: tox
-deploy:
-  provider: pypi
-  distributions: sdist bdist_wheel
-  user: pattonw
-  password:
-    secure: mm327RQ0w33O11xASZWoSVkSqyr3y5izIRkN6Qr/PvvRRY9jigCV8XSZgMcQ/eqWg0CSgEUaBpNTFQvTwwVVveT4gnuVVm7FWJpP011UI30h2qvhmihVPZQwCxPm7Xna5JoJ3GzYoYXwuqhMHs4ZC+ZnPtRvhwWbMzhmBLeSt34Hml0GqObDtjlAFsLpiBDmBXcYY8KXUiNrRa/gwf8ifU3UzVXhcEcrj2d8n2zpVealbCnn+KXI8/FOfyHrHKKfUqsjnFhuj7+8MAp0rtNWdfLxlYt8/M8ANCLQu3BJCs+lXIyvIrKPEp/s4NgIi9aGJBIHBhcvPrLernNEkGrr654/J5hwJCkPS572mXnFLrkA0bLEjH9RQb0UxJB14Fcee7ljlX6ujDkEAGemL/I7HeXCSaJ3ujC4SMKZ9MLVe/8CAIhiNFpaBot4ytutn39F1VX4GNWSX1cInDKEa7hQFalDk6ykC5cNzK0BXV7mcwcSfK0U7DhayxcQwp5i9QTqDkPR1Bq0M1XL26MXCjdD1iQgeyYMK7cUEk7fY+VoxFLqpJzBFBkSH8i7Oby+nr9ULFqUwKpxbiqe7PtBodJ9aus8ekdPzYk+ft+mRdIxJ9m6PQa+ZRn5uJk5lwFJq8L1wQ5kIFghrS/QSGHMGbLBTrKDVGYmm0Bq6Gmd3c3Myr8=
-  on:
-    tags: true
-    repo: pattonw/pyn5
-    python: 3.6
