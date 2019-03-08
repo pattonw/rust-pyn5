@@ -234,7 +234,7 @@ dataset!(DatasetFLOAT32, FLOAT32, f32);
 dataset!(DatasetFLOAT64, FLOAT64, f64);
 
 #[pymodule]
-fn libpyn5(_py: Python, m: &PyModule) -> PyResult<()> {
+fn pyn5(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_wrapped(wrap_pyfunction!(create_dataset))?;
     m.add_class::<DatasetUINT8>()?;
     m.add_class::<DatasetUINT16>()?;

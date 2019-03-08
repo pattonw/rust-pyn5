@@ -1,7 +1,14 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+"""Tests for `pyn5` package."""
+
+
+import unittest
 from pathlib import Path
 import shutil
-import unittest
 import numpy as np
+
 
 import pyn5
 
@@ -20,8 +27,8 @@ class BaseTestCase:
             self.n5 = pyn5.open(self.root, self.dataset, self.dtype, False)
 
         def tearDown(self):
-            if Path(self.root, self.dataset).is_dir():
-                shutil.rmtree(Path(self.root, self.dataset))
+            if Path(self.root).is_dir():
+                shutil.rmtree(Path(self.root))
 
         def test_read_write_valid(self):
             self.n5.write_block([0, 0, 0], self.valid_block)
