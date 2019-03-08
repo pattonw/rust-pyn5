@@ -2,5 +2,21 @@ language: python
 python:
 - 3.6
 - 3.5
+env:
+  global:
+    - TRAVIS_RUST_VERSION=nightly
+    - RUST_BACKTRACE=1
+
+addons:
+  apt:
+    packages:
+      - libcurl4-openssl-dev
+      - libelf-dev
+      - libdw-dev
+      - cmake
+      - gcc
+      - binutils-dev
+      - libiberty-dev
+      
 install: pip install -U tox-travis
 script: tox
