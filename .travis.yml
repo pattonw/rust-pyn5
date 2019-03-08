@@ -4,15 +4,15 @@ python:
 - 3.5
 
 matrix:
-include:
-  - sudo: required
-    services:
-      - docker
-    env: DOCKER_IMAGE=quay.io/pypa/manylinux1_x86_64
-  - sudo: required
-    services:
-      - docker
-    env: DOCKER_IMAGE=quay.io/pypa/manylinux1_i686
+  - include:
+    - sudo: required
+      services:
+        - docker
+      env: DOCKER_IMAGE=quay.io/pypa/manylinux1_x86_64
+    - sudo: required
+      services:
+        - docker
+      env: DOCKER_IMAGE=quay.io/pypa/manylinux1_i686
           PRE_CMD=linux32
 env:
   global:
@@ -42,3 +42,5 @@ script:
     pip install twine
     python -m twine upload wheelhouse/*.whl
   fi
+
+  tox
