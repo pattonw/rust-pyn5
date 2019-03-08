@@ -23,4 +23,15 @@ before_install:
   - source ./ci/travis/setup.sh
 
 install: pip install -U tox-travis
-script: tox
+script: 
+  - tox
+  - $PIP install cibuildwheel setuptools_rust
+  - export CIBW_BEFORE_BUILD='pip install setuptools-rust && source {project}/ci/install_rust.sh'
+  - export CIBW_SKIP=cp34-*\ $CIBW_SKIP
+  - export CIBW_ENVIRONMENT='PATH="$HOME/rust/bin:$PATH"'
+  - cibuildwheel --output-dir wheelhouse
+  - |
+    if [[ $TRAVIS_TAG ]]; then
+      $PIP install twine
+      $PYTHON -m twine upload wheelhouse/*.whl
+    fi
