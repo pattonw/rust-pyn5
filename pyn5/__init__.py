@@ -4,6 +4,6 @@
 
 __author__ = """William Hunter Patton"""
 __email__ = "pattonw@hhmi.org"
-__version__ = "__version__ = '0.1.1'"
+__version__ = "__version__ = '0.1.2'"
 
 from .python_wrappers import *
