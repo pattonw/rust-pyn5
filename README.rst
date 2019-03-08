@@ -6,11 +6,11 @@ pyn5
 .. image:: https://img.shields.io/pypi/v/pyn5.svg
         :target: https://pypi.python.org/pypi/pyn5
 
-.. image:: https://img.shields.io/travis/pattonw/pyn5.svg
+.. image:: https://travis-ci.org/pattonw/rust-pyn5.svg?branch=master
         :target: https://travis-ci.org/pattonw/rust-pyn5
 
 .. image:: https://readthedocs.org/projects/pyn5/badge/?version=latest
-        :target: https://pyn5.readthedocs.io/en/latest/?badge=latest
+        :target: https://rust-pyn5.readthedocs.io/en/latest/?badge=latest
         :alt: Documentation Status
 
 
