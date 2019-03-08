@@ -40,7 +40,7 @@ install:
 - pip install -U tox-travis cibuildwheel setuptools_rust
 script:
 - tox
-- export CIBW_BEFORE_BUILD='pip install setuptools-rust && source {project}/ci/setup.sh'
+- export CIBW_BEFORE_BUILD='pip install setuptools-rust && source {project}/ci/travis/setup.sh'
 - export CIBW_SKIP=cp27-*\ cp34-*\ $CIBW_SKIP
 - cibuildwheel --output-dir wheelhouse
 - |
