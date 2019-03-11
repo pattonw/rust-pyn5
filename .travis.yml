@@ -1,22 +1,12 @@
 language: python
 matrix:
   include:
-    - python: 3.6
-      env:
-        - TOX=true
-        - DEPLOY=false
-    - python: 3.5
-      env:
-        - TOX=true
-        - DEPLOY=false
     - sudo: required
-      python: 3.6
+      python: 3.5
       services:
         - docker
       env:
-        - TOX=false
-        - DEPLOY=true
-        - CIBW_SKIP=*manylinux1_i686*
+        - CIBW_BUILD=cp35-*
         - PIP=pip
         - PYTHON=python
     - sudo: required
@@ -24,9 +14,7 @@ matrix:
       services:
         - docker
       env:
-        - TOX=false
-        - DEPLOY=true
-        - CIBW_SKIP=*manylinux1_x86_64*
+        - CIBW_BUILD=cp36-*
         - PIP=pip
         - PYTHON=python
 env:
@@ -50,12 +38,9 @@ before_install:
 install:
 - pip install -U tox-travis cibuildwheel setuptools_rust
 script:
+- tox
 - |
-  if [[ $TOX == "true" ]]; then
-    tox
-  fi
-- |
-  if [[ $DEPLOY == "true" ]]; then
+  if [[ $TRAVIS_TAG ]]; then
     export CIBW_BEFORE_BUILD='pip install setuptools-rust && source {project}/ci/travis/setup.sh'
     export CIBW_SKIP=cp27-*\ cp34-*\ $CIBW_SKIP
     export CIBW_ENVIRONMENT='PATH="$HOME/.rust/bin:$HOME/.cargo/bin:$PATH"'
