@@ -34,7 +34,7 @@ env:
   - TRAVIS_RUST_VERSION=nightly
   - RUST_BACKTRACE=1
   - TWINE_USERNAME=pattonw
-  - TWINE_PASSWORD=ZA8aIvBN2uVm74hOVcVuIUm1bw36Chd8SnmsWrlvmV13BQFDkTbQNN7RIKEjcfBfMso5xHp9O+1KpoIWvXUtrfvaBmlL29VJiyW/E05NL9em7i2kWSX8W5K3bOB8cM/1duQifupWqSYgBSDGvncecAhoPcKceZ+jPG0ZKN8VlTypnuul97ny/FgtXmmFj8lPQYdSASS37Eern+tLxvFEWh4j2Q1bXbPb4ZYNrvJuB1GKeqozGoAEwDq5a6+mAKz6vni4jSL0asIJkk85cKxCI0pNZIA6JtZtbfgbTPTpUWS4ZHvpA9V92B1kODCW3qmASqbR0lV/xRLkBWcHl/77qh+z1hK35ySCvrGKV7eDX/zQ6SPtYuu99+moN9fTVpG8zHNJC8XzYGbJe2frOHFPoUVdT/pVnHdHYoMWMgLjqfs3mUmu+uwl3PSrtRXhcFR3W2wtQ+wG4fWsN+jrJbVXzi4Hlx58Nsbg4ZwyH9yH7n9e2PoqvSbZoR7IPnMsE88+w5vN/TtCmJ0l8p7RwOKJeEpTFJ92HINfXOcdUarIHkjrWiHA4GI4StezsFkcrDNgkCnOCM6Ux2HOBuF4hoWMhi2B0nBpWVD4GUabMCXielykL1LcaX1ZK+p8/sqylkptfXSi8QB5qeSjrAVrrReSv1GejjHKkYKBQO1Qn8sW858=
+  
 addons:
   apt:
     packages:
@@ -51,11 +51,11 @@ install:
 - pip install -U tox-travis cibuildwheel setuptools_rust
 script:
 - |
-  if [[ $TOX ]]; then
+  if [[ $TOX == "true" ]]; then
     tox
   fi
 - |
-  if [[ $DEPLOY ]]; then
+  if [[ $DEPLOY == "true" ]]; then
     export CIBW_BEFORE_BUILD='pip install setuptools-rust && source {project}/ci/travis/setup.sh'
     export CIBW_SKIP=cp27-*\ cp34-*\ $CIBW_SKIP
     export CIBW_ENVIRONMENT='PATH="$HOME/.rust/bin:$HOME/.cargo/bin:$PATH"'
