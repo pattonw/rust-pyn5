@@ -1,26 +1,48 @@
-language: python
-python:
-- 3.6
-- 3.5
+stages:
+  - test
+  - deploy
 env:
   global:
-    - TRAVIS_RUST_VERSION=nightly
-    - RUST_BACKTRACE=1
+  - TRAVIS_RUST_VERSION=nightly
+  - RUST_BACKTRACE=1
+  - TWINE_USERNAME=pattonw
 
-addons:
-  apt:
-    packages:
-      - libcurl4-openssl-dev
-      - libelf-dev
-      - libdw-dev
-      - cmake
-      - gcc
-      - binutils-dev
-      - libiberty-dev
+test_template: &test_template
+  stage: test
+  language: python
+  python: 3.6
+  before_install:
+    source ./ci/travis/setup_rust.sh
+  install:
+    pip install -U tox-travis setuptools_rust
+  script:
+    ./ci/travis/test.sh
 
-# add rust
-before_install:
-  - source ./ci/travis/setup.sh
+deploy_template: &deploy_template
+  stage: deploy
+  language: python
+  sudo: required
+  services:
+    docker
+  env:
+    - CIBW_BUILD=cp35-*
+  python: 3.6
+  install:
+    pip install -U cibuildwheel
+  script:
+    ./ci/travis/build.sh
 
-install: pip install -U tox-travis
-script: tox
+
+jobs:
+  include:
+    - <<: *test_template
+      python: 3.5
+    - <<: *test_template
+      python: 3.6
+    - <<: *deploy_template
+      env:
+        - CIBW_BUILD=cp35-*
+    - <<: *deploy_template
+      env:
+        - CIBW_BUILD=cp36-*
+
