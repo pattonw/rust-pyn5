@@ -1,26 +1,51 @@
 language: python
-python:
-- 3.6
-- 3.5
+matrix:
+  include:
+    - sudo: required
+      python: 3.5
+      services:
+        - docker
+      env:
+        - CIBW_BUILD=cp35-*
+        - PIP=pip
+        - PYTHON=python
+    - sudo: required
+      python: 3.6
+      services:
+        - docker
+      env:
+        - CIBW_BUILD=cp36-*
+        - PIP=pip
+        - PYTHON=python
 env:
   global:
-    - TRAVIS_RUST_VERSION=nightly
-    - RUST_BACKTRACE=1
-
+  - TRAVIS_RUST_VERSION=nightly
+  - RUST_BACKTRACE=1
+  - TWINE_USERNAME=pattonw
+  
 addons:
   apt:
     packages:
-      - libcurl4-openssl-dev
-      - libelf-dev
-      - libdw-dev
-      - cmake
-      - gcc
-      - binutils-dev
-      - libiberty-dev
-
-# add rust
+    - libcurl4-openssl-dev
+    - libelf-dev
+    - libdw-dev
+    - cmake
+    - gcc
+    - binutils-dev
+    - libiberty-dev
 before_install:
-  - source ./ci/travis/setup.sh
+- source ./ci/travis/setup.sh
+install:
+- pip install -U tox-travis cibuildwheel setuptools_rust
+script:
+- tox
+- |
+  if [[ $TRAVIS_TAG ]]; then
+    export CIBW_BEFORE_BUILD='pip install setuptools-rust && source {project}/ci/travis/setup.sh'
+    export CIBW_SKIP=cp27-*\ cp34-*\ $CIBW_SKIP
+    export CIBW_ENVIRONMENT='PATH="$HOME/.rust/bin:$HOME/.cargo/bin:$PATH"'
+    cibuildwheel --output-dir wheelhouse
+    pip install twine
+    python -m twine upload wheelhouse/*.whl
+  fi
 
-install: pip install -U tox-travis
-script: tox
