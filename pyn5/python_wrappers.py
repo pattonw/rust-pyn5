@@ -18,7 +18,6 @@ from .pyn5 import (
     DatasetINT64,
     DatasetFLOAT32,
     DatasetFLOAT64,
-    create_dataset,
 )
 
 
@@ -92,7 +91,7 @@ def read(dataset, bounds: Tuple[np.ndarray, np.ndarray], dtype: type = int):
 
     Note: passing in dtype is necessary since numpy arrays are float by default.
           dataset.get_data_type() could be implemented, but a better solution would
-          be to have dataset.read_ndarray return a numpy array. 
+          be to have dataset.read_ndarray return a numpy array.
     """
     bounds = (bounds[0].astype(int), bounds[1].astype(int))
     return (

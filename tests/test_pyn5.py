@@ -374,4 +374,3 @@ class TestPythonReadWrite(unittest.TestCase):
                 np.array(range(64), dtype=int).reshape([4, 4, 4]),
             )
         )
-
