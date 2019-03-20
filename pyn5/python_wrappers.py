@@ -96,7 +96,7 @@ def read(dataset, bounds: Tuple[np.ndarray, np.ndarray], dtype: type = int):
     bounds = (bounds[0].astype(int), bounds[1].astype(int))
     return (
         np.array(dataset.read_ndarray(list(bounds[0]), list(bounds[1] - bounds[0])))
-        .reshape(list(bounds[1] - bounds[0]))
+        .reshape(list(bounds[1] - bounds[0])[::-1])
         .transpose([2, 1, 0])
         .astype(dtype)
     )
