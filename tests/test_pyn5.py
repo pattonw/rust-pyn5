@@ -374,3 +374,10 @@ class TestPythonReadWrite(unittest.TestCase):
                 np.array(range(64), dtype=int).reshape([4, 4, 4]),
             )
         )
+
+        # test writing data in non block shapes
+        bounds = (np.array([0, 0, 0]), np.array([1, 2, 3]))
+        data = np.array(range(6)).reshape([1, 2, 3])
+        pyn5.write(self.n5, bounds, data)
+
+        self.assertTrue(np.array_equal(pyn5.read(self.n5, bounds), data))
