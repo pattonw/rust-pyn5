@@ -6,7 +6,7 @@ flake8==3.7.7
 coverage==4.5.3
 tox==3.8.3
 twine==1.13.0
-Sphinx==1.8.5
+Sphinx==2.0.0
 setuptools_rust==0.10.6
 numpy==1.16.2
 
