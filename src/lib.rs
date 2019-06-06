@@ -17,118 +17,37 @@ fn create_dataset(
     block_size: Vec<i32>,
     dtype: &str,
 ) -> PyResult<()> {
-    let n = N5Filesystem::open_or_create(root_path).unwrap();
+    let dtype = match dtype {
+        "UINT8" => DataType::UINT8,
+        "UINT16" => DataType::UINT16,
+        "UINT32" => DataType::UINT32,
+        "UINT64" => DataType::UINT64,
+        "INT8" => DataType::INT8,
+        "INT16" => DataType::INT16,
+        "INT32" => DataType::INT32,
+        "INT64" => DataType::INT64,
+        "FLOAT32" => DataType::FLOAT32,
+        "FLOAT64" => DataType::FLOAT64,
+        _ => return Err(exceptions::ValueError::py_err(format!(
+            "Datatype {} is not supported. Please choose from {:#?}",
+            dtype,
+            (
+                "UINT8", "UINT16", "UINT32", "UINT64", "INT8", "INT16", "INT32", "INT64",
+                "FLOAT32", "FLOAT64"
+            )
+        ))),
+    };
+
+    let n = N5Filesystem::open_or_create(root_path)?;
     if !n.exists(path_name) {
-        match dtype {
-            "UINT8" => {
-                let data_attrs = DatasetAttributes::new(
-                    dimensions,
-                    block_size,
-                    DataType::UINT8,
-                    CompressionType::new::<compression::gzip::GzipCompression>(),
-                );
-                n.create_dataset(path_name, &data_attrs)?;
-                Ok(())
-            }
-            "UINT16" => {
-                let data_attrs = DatasetAttributes::new(
-                    dimensions,
-                    block_size,
-                    DataType::UINT16,
-                    CompressionType::new::<compression::gzip::GzipCompression>(),
-                );
-                n.create_dataset(path_name, &data_attrs)?;
-                Ok(())
-            }
-            "UINT32" => {
-                let data_attrs = DatasetAttributes::new(
-                    dimensions,
-                    block_size,
-                    DataType::UINT32,
-                    CompressionType::new::<compression::gzip::GzipCompression>(),
-                );
-                n.create_dataset(path_name, &data_attrs)?;
-                Ok(())
-            }
-            "UINT64" => {
-                let data_attrs = DatasetAttributes::new(
-                    dimensions,
-                    block_size,
-                    DataType::UINT64,
-                    CompressionType::new::<compression::gzip::GzipCompression>(),
-                );
-                n.create_dataset(path_name, &data_attrs)?;
-                Ok(())
-            }
-            "INT8" => {
-                let data_attrs = DatasetAttributes::new(
-                    dimensions,
-                    block_size,
-                    DataType::INT8,
-                    CompressionType::new::<compression::gzip::GzipCompression>(),
-                );
-                n.create_dataset(path_name, &data_attrs)?;
-                Ok(())
-            }
-            "INT16" => {
-                let data_attrs = DatasetAttributes::new(
-                    dimensions,
-                    block_size,
-                    DataType::INT16,
-                    CompressionType::new::<compression::gzip::GzipCompression>(),
-                );
-                n.create_dataset(path_name, &data_attrs)?;
-                Ok(())
-            }
-            "INT32" => {
-                let data_attrs = DatasetAttributes::new(
-                    dimensions,
-                    block_size,
-                    DataType::INT32,
-                    CompressionType::new::<compression::gzip::GzipCompression>(),
-                );
-                n.create_dataset(path_name, &data_attrs)?;
-                Ok(())
-            }
-            "INT64" => {
-                let data_attrs = DatasetAttributes::new(
-                    dimensions,
-                    block_size,
-                    DataType::INT64,
-                    CompressionType::new::<compression::gzip::GzipCompression>(),
-                );
-                n.create_dataset(path_name, &data_attrs)?;
-                Ok(())
-            }
-            "FLOAT32" => {
-                let data_attrs = DatasetAttributes::new(
-                    dimensions,
-                    block_size,
-                    DataType::FLOAT32,
-                    CompressionType::new::<compression::gzip::GzipCompression>(),
-                );
-                n.create_dataset(path_name, &data_attrs)?;
-                Ok(())
-            }
-            "FLOAT64" => {
-                let data_attrs = DatasetAttributes::new(
-                    dimensions,
-                    block_size,
-                    DataType::FLOAT64,
-                    CompressionType::new::<compression::gzip::GzipCompression>(),
-                );
-                n.create_dataset(path_name, &data_attrs)?;
-                Ok(())
-            }
-            _ => Err(exceptions::ValueError::py_err(format!(
-                "Datatype {} is not supported. Please choose from {:#?}",
-                dtype,
-                (
-                    "UINT8", "UINT16", "UINT32", "UINT64", "INT8", "INT16", "INT32", "INT64",
-                    "FLOAT32", "FLOAT64"
-                )
-            ))),
-        }
+        let data_attrs = DatasetAttributes::new(
+            dimensions,
+            block_size,
+            dtype,
+            CompressionType::new::<compression::gzip::GzipCompression>(),
+        );
+        n.create_dataset(path_name, &data_attrs)?;
+        Ok(())
     } else {
         Err(exceptions::ValueError::py_err(format!(
             "Dataset {} already exists!",
