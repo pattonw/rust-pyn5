@@ -5,6 +5,7 @@ extern crate n5;
 extern crate pyo3;
 
 use n5::prelude::*;
+use n5::ndarray::prelude::*;
 use pyo3::exceptions;
 use pyo3::prelude::*;
 
@@ -41,8 +42,8 @@ fn create_dataset(
     let n = N5Filesystem::open_or_create(root_path)?;
     if !n.exists(path_name) {
         let data_attrs = DatasetAttributes::new(
-            dimensions,
-            block_size,
+            dimensions.into(),
+            block_size.into(),
             dtype,
             CompressionType::new::<compression::gzip::GzipCompression>(),
         );
@@ -105,7 +106,7 @@ macro_rules! dataset {
                 translation: Vec<i64>,
                 dimensions: Vec<i64>,
             ) -> PyResult<Vec<$d_type>> {
-                let bounding_box = BoundingBox::new(translation, dimensions);
+                let bounding_box = BoundingBox::new(translation.into(), dimensions.into());
 
                 let block_out = self
                     .n5
@@ -115,8 +116,8 @@ macro_rules! dataset {
             }
 
             fn write_block(&self, position: Vec<i64>, data: Vec<$d_type>) -> PyResult<()> {
-                let block_shape = self.attr.get_block_size().to_vec();
-                let block_size = block_shape.iter().fold(1, |a, &b| a * b) as usize;
+                let block_shape = self.attr.get_block_size();
+                let block_size = self.attr.get_block_num_elements();
 
                 if block_size != data.len() {
                     Err(exceptions::ValueError::py_err(format!(
@@ -127,7 +128,7 @@ macro_rules! dataset {
                         block_size
                     )))
                 } else if self.n5.exists(&self.path) {
-                    let block_in = VecDataBlock::new(block_shape, position, data);
+                    let block_in = VecDataBlock::new(block_shape.into(), position.into(), data);
                     self.n5.write_block(&self.path, &self.attr, &block_in)?;
                     Ok(())
                 } else {
