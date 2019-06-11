@@ -20,7 +20,7 @@ Python wrapper around rust-n5.
 
 
 * Free software: MIT license
-* Documentation: https://pyn5.readthedocs.io.
+* Documentation: https://rust-pyn5.readthedocs.io.
 
 
 Features
