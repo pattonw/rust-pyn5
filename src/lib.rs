@@ -98,7 +98,7 @@ macro_rules! dataset {
 
             #[getter]
             fn block_shape(&self) -> PyResult<(Vec<i32>)> {
-                Ok(self.attr.get_block_size().iter().cloned().collect())
+                Ok(self.attr.get_block_size().into())
             }
 
             fn read_ndarray(
