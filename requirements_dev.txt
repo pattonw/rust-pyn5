@@ -9,5 +9,3 @@ twine==1.13.0
 Sphinx==2.1.1
 setuptools_rust==0.10.6
 numpy==1.16.4
-
-
