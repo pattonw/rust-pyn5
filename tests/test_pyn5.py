@@ -33,8 +33,9 @@ class BaseTestCase:
 
         def test_read_write_valid(self):
             self.n5.write_block([0, 0, 0], self.valid_block)
-            self.assertEqual(
-                self.n5.read_ndarray([0, 0, 0], self.block_size), self.valid_block
+            np.testing.assert_equal(
+                self.n5.read_ndarray([0, 0, 0], self.block_size),
+                np.array(self.valid_block).reshape(self.block_size, order='F')
             )
 
         def test_read_write_overflow(self):
@@ -46,9 +47,9 @@ class BaseTestCase:
                 self.n5.write_block([1, 1, 1], self.overflow_block)
                 raise AssertionError("Expected OverflowError")
             except OverflowError:
-                self.assertEqual(
+                np.testing.assert_equal(
                     self.n5.read_ndarray([2, 2, 2], self.block_size),
-                    [0] * np.prod(self.block_size),
+                    np.zeros(self.block_size)
                 )
 
         def test_read_write_wrong_dtype(self):
@@ -60,9 +61,9 @@ class BaseTestCase:
                 self.n5.write_block([2, 2, 2], self.wrong_dtype_block)
                 raise AssertionError("Expected TypeError")
             except TypeError:
-                self.assertEqual(
+                np.testing.assert_equal(
                     self.n5.read_ndarray([4, 4, 4], self.block_size),
-                    [0] * np.prod(self.block_size),
+                    np.zeros(self.block_size)
                 )
 
 
@@ -363,21 +364,34 @@ class TestPythonReadWrite(unittest.TestCase):
         )
 
         # test writting non-uniform block to make sure axis orderings are correct
-        pyn5.write(
-            self.n5,
-            (np.array([1, 1, 1]), np.array([5, 5, 5])),
-            np.array(range(64), dtype=int).reshape([4, 4, 4]),
+        self.n5.write_ndarray(
+            np.array([1, 1, 1]),
+            np.array(range(64), dtype=np.uint8).reshape([4, 4, 4]),
+            0,
         )
         self.assertTrue(
             np.array_equal(
-                pyn5.read(self.n5, (np.array([1, 1, 1]), np.array([5, 5, 5]))),
+                self.n5.read_ndarray(np.array([1, 1, 1]), np.array([4, 4, 4])),
                 np.array(range(64), dtype=int).reshape([4, 4, 4]),
             )
         )
 
-        # test writing data in non block shapes
-        bounds = (np.array([0, 0, 0]), np.array([1, 2, 3]))
-        data = np.array(range(6)).reshape([1, 2, 3])
-        pyn5.write(self.n5, bounds, data)
+        # sanity check axis orderings
+        data = np.zeros([5, 7, 1], dtype=np.uint8)
+        data[0, :, 0] = 1
+        data[1, :, 0] = 2
+        data[2, :, 0] = 3
+        self.n5.write_ndarray(np.array([0, 0, 0]), data, 0)
+        self.assertTrue(np.all(
+            self.n5.read_ndarray(np.array([1, 0, 0]), np.array([1, 7, 1])) == 2))
+        np.testing.assert_equal(
+            self.n5.read_ndarray(np.array([0, 0, 0]), np.array([3, 1, 1])).flatten(),
+            np.array([1, 2, 3]))
 
-        self.assertTrue(np.array_equal(pyn5.read(self.n5, bounds), data))
+        # test writing data in non block shapes
+        data = np.array(range(6), dtype=np.uint8).reshape([1, 2, 3])
+        self.n5.write_ndarray(np.array([0, 0, 0]), data, 0)
+
+        self.assertTrue(np.array_equal(
+            self.n5.read_ndarray(np.array([0, 0, 0]), np.array([1, 2, 3])),
+            data))
