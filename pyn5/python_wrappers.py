@@ -21,6 +21,20 @@ from .pyn5 import (
 )
 
 
+dataset_types = {
+    np.dtype("uint8"): DatasetUINT8,
+    np.dtype("uint16"): DatasetUINT16,
+    np.dtype("uint32"): DatasetUINT32,
+    np.dtype("uint64"): DatasetUINT64,
+    np.dtype("int8"): DatasetINT8,
+    np.dtype("int16"): DatasetINT16,
+    np.dtype("int32"): DatasetINT32,
+    np.dtype("int64"): DatasetINT64,
+    np.dtype("float32"): DatasetFLOAT32,
+    np.dtype("float64"): DatasetFLOAT64,
+}
+
+
 def open(root_path: str, dataset: str, dtype: str = "", read_only=True):
     """
     Returns a Dataset of the corresponding dtype. Leave dtype blank to return
@@ -45,44 +59,23 @@ def open(root_path: str, dataset: str, dtype: str = "", read_only=True):
                     )
                 )
 
-    if dtype == "UINT8":
-        return DatasetUINT8(root_path, dataset, read_only)
-    elif dtype == "UINT16":
-        return DatasetUINT16(root_path, dataset, read_only)
-    elif dtype == "UINT32":
-        return DatasetUINT32(root_path, dataset, read_only)
-    elif dtype == "UINT64":
-        return DatasetUINT64(root_path, dataset, read_only)
-    elif dtype == "INT8":
-        return DatasetINT8(root_path, dataset, read_only)
-    elif dtype == "INT16":
-        return DatasetINT16(root_path, dataset, read_only)
-    elif dtype == "INT32":
-        return DatasetINT32(root_path, dataset, read_only)
-    elif dtype == "INT64":
-        return DatasetINT64(root_path, dataset, read_only)
-    elif dtype == "FLOAT32":
-        return DatasetFLOAT32(root_path, dataset, read_only)
-    elif dtype == "FLOAT64":
-        return DatasetFLOAT64(root_path, dataset, read_only)
-    else:
-        raise ValueError(
-            "Given dtype {} is not supported. Please choose from ({})".format(
-                dtype,
-                (
-                    "UINT8",
-                    "UINT16",
-                    "UINT32",
-                    "UINT64",
-                    "INT8",
-                    "INT16",
-                    "INT32",
-                    "INT64",
-                    "FLOAT32",
-                    "FLOAT64",
-                ),
-            )
-        )
+    unsupported_dtype_msg = "Given dtype {} is not supported. Please choose from ({})".format(
+        dtype,
+        tuple(dataset_types),
+    )
+
+    if not dtype:
+        raise ValueError(unsupported_dtype_msg)
+    if isinstance(dtype, str):
+        dtype = dtype.lower()
+
+    dtype = np.dtype(dtype)
+
+    try:
+        dataset_type = dataset_types[dtype]
+        return dataset_type(root_path, dataset, read_only)
+    except KeyError:
+        raise ValueError(unsupported_dtype_msg)
 
 
 def read(dataset, bounds: Tuple[np.ndarray, np.ndarray], dtype: type = int):
