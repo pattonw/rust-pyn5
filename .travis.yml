@@ -4,7 +4,8 @@ python:
 
 stages:
   - test
-  - deploy
+  - name: deploy
+    if: tag IS present
 env:
   global:
   - TRAVIS_RUST_VERSION=nightly
@@ -56,8 +57,6 @@ jobs:
       script:
         echo "skip"
       deploy:
-        on:
-          tags: true
         distributions: sdist
         password:
           secure: VeZNGpUs5ne3ZlCeZLPbT+3O6yRDM9sv8emg6m90ZwLuZAlXV0t2dGHKccMTBMbS2jWSy2q4TY2IkN0SOWrOmi53Klt3K5Y461Ra8dT+XdmXK8g+36HJEJKWfFvVpYVuIw72yoUWHZsr2iNxi7tiAc/AjBvbnbgSXuAayuVm+8K7tQ85kkfbdBErDQnhziEiqtIrjak3hwBgjWpm0UEuAKG/eTBFk0BAN9wqRajCS58WLaLVnF4FtAHT4QAxo33j99njB7cz8PLjXNd3BxT2BpMbjqmg8krVW7ayMJKdLvWdICezPB4nlsnL9jBlXMaRvI0ijSl59QkVCDbkrERUCR7IdJZqAX3IFSe+9X1cwzJsJeXYOfQjYMX+ZyqR8qcmQKS6M1u3uYMXhoj+TU9uO0sK4dNxrS0DRhg22TdjAcpqnz0UDVVWfFapltroE0ePVPs8aOOqdpJewRDPDI0ghRg/nzrSIhEI+85XnSTcjm4if5hwiEFchIFlV5d/ZIHtPn+b0fCRTDMq4kjObxD9uBbVvda1+CESCNrE91oB1erlrjygsDnpdRWi5dzaOVe5DJmAxT/V5mPFlskOPJLZr3lzZOQm1FGVJbvTN766plDCWozTAG8wT58hq/nJTBIiRjHlQnhFjlHLkaWTEq/jJ8mA++KXvbofCy833V0OMrw=
