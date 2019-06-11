@@ -1,11 +1,13 @@
 #![feature(specialization)]
 
 extern crate n5;
+extern crate numpy;
 #[macro_use]
 extern crate pyo3;
 
 use n5::prelude::*;
 use n5::ndarray::prelude::*;
+use numpy::{IntoPyArray, PyArrayDyn};
 use pyo3::exceptions;
 use pyo3::prelude::*;
 
@@ -103,15 +105,31 @@ macro_rules! dataset {
 
             fn read_ndarray(
                 &self,
+                py: Python,
                 translation: Vec<i64>,
                 dimensions: Vec<i64>,
-            ) -> PyResult<Vec<$d_type>> {
+            ) -> PyResult<Py<PyArrayDyn<$d_type>>> {
                 let bounding_box = BoundingBox::new(translation.into(), dimensions.into());
 
-                let block_out = self
+                let arr = self
                     .n5
                     .read_ndarray::<$d_type>(&self.path, &self.attr, &bounding_box)?;
-                Ok(block_out.into_raw_vec())
+                Ok(arr.into_pyarray(py).to_owned())
+            }
+
+            fn write_ndarray(
+                &self,
+                translation: Vec<i64>,
+                arr: &PyArrayDyn<$d_type>,
+                fill_val: $d_type,
+            ) -> PyResult<()> {
+                self.n5.write_ndarray::<$d_type>(
+                    &self.path, &self.attr, translation.into(),
+                    // TODO: because of n5's `write_ndarray` signature, must
+                    // pass a reference to an owned ndarray here. n5 could
+                    // instead take an array view, which may solve this.
+                    &arr.as_array().to_owned(), fill_val)?;
+                Ok(())
             }
 
             fn write_block(&self, position: Vec<i64>, data: Vec<$d_type>) -> PyResult<()> {
