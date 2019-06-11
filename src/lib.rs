@@ -77,16 +77,16 @@ macro_rules! dataset {
             ) -> PyResult<()> {
                 Ok(obj.init({
                     if read_only {
-                        let n = N5Filesystem::open(root_path).unwrap();
-                        let attributes = n.get_dataset_attributes(path_name).unwrap();
+                        let n = N5Filesystem::open(root_path)?;
+                        let attributes = n.get_dataset_attributes(path_name)?;
                         Self {
                             n5: n,
                             attr: attributes,
                             path: path_name.to_string(),
                         }
                     } else {
-                        let n = N5Filesystem::open_or_create(root_path).unwrap();
-                        let attributes = n.get_dataset_attributes(path_name).unwrap();
+                        let n = N5Filesystem::open_or_create(root_path)?;
+                        let attributes = n.get_dataset_attributes(path_name)?;
                         Self {
                             n5: n,
                             attr: attributes,
@@ -110,8 +110,7 @@ macro_rules! dataset {
 
                 let block_out = self
                     .n5
-                    .read_ndarray::<$d_type>(&self.path, &self.attr, &bounding_box)
-                    .unwrap();
+                    .read_ndarray::<$d_type>(&self.path, &self.attr, &bounding_box)?;
                 Ok(block_out.into_raw_vec())
             }
 
