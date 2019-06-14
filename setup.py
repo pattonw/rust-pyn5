@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """The setup script."""
+import re
 
 from setuptools import setup, find_packages
 from setuptools_rust import Binding, RustExtension
@@ -12,11 +13,24 @@ with open("README.rst") as readme_file:
 with open("HISTORY.rst") as history_file:
     history = history_file.read()
 
-requirements = []
+requirements = ["numpy"]
 
 setup_requirements = []
-
 test_requirements = []
+
+pkg_re = re.compile(r"^([\w-]+)\s*([<>=]{0,2})\s*(.*)$")
+
+with open("requirements_dev.txt") as req_file:
+    for line in req_file:
+        line = line.strip()
+        match = pkg_re.match(line)
+        if not match:
+            continue
+        pkg_name = match.group(0)
+        if pkg_name in ("tox", "flake8", "coverage", "pytest", "pytest-runner"):
+            test_requirements.append(line)
+        if pkg_name in ("setuptools_rust",):
+            setup_requirements.append(line)
 
 setup(
     author="William Hunter Patton",
