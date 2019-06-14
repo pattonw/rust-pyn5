@@ -8,309 +8,90 @@ import unittest
 from pathlib import Path
 import shutil
 import numpy as np
-
+import pytest
 
 import pyn5
 
-
-class BaseTestCase:
-    class BaseTest(unittest.TestCase):
-        def setUp(self):
-            self.root = "test.n5"
-            self.dataset = "test_{}".format(self.dtype)
-            self.dataset_size = [10, 10, 10]
-            self.block_size = [2, 2, 2]
-            if Path(self.root).is_dir():
-                shutil.rmtree(str(Path(self.root).absolute()))
-            pyn5.create_dataset(
-                self.root, self.dataset, self.dataset_size, self.block_size, self.dtype
-            )
-            self.n5 = pyn5.open(self.root, self.dataset, self.dtype, False)
-
-        def tearDown(self):
-            if Path(self.root).is_dir():
-                shutil.rmtree(str(Path(self.root).absolute()))
-
-        def test_read_write_valid(self):
-            self.n5.write_block([0, 0, 0], self.valid_block)
-            np.testing.assert_equal(
-                self.n5.read_ndarray([0, 0, 0], self.block_size),
-                np.array(self.valid_block).reshape(self.block_size, order='F')
-            )
-
-        def test_read_write_overflow(self):
-            """
-            Doesn't work properly for float types since floats that are too
-            large get converted to inf
-            """
-            try:
-                self.n5.write_block([1, 1, 1], self.overflow_block)
-                raise AssertionError("Expected OverflowError")
-            except OverflowError:
-                np.testing.assert_equal(
-                    self.n5.read_ndarray([2, 2, 2], self.block_size),
-                    np.zeros(self.block_size)
-                )
-
-        def test_read_write_wrong_dtype(self):
-            """
-            Doesn't work properly for float types since I'm guessing ints
-            get converted to float types somewhere between python and rust
-            """
-            try:
-                self.n5.write_block([2, 2, 2], self.wrong_dtype_block)
-                raise AssertionError("Expected TypeError")
-            except TypeError:
-                np.testing.assert_equal(
-                    self.n5.read_ndarray([4, 4, 4], self.block_size),
-                    np.zeros(self.block_size)
-                )
+from .conftest import BLOCKSIZE
 
 
-class TestU8(BaseTestCase.BaseTest):
-    def setUp(self):
-        self.dtype = "UINT8"
+def dtype_info(dtype):
+    if np.issubdtype(dtype, np.integer):
+        info = np.iinfo(dtype)
+    elif np.issubdtype(dtype, np.floating):
+        info = np.finfo(dtype)
+    else:
+        raise ValueError("Unknown dtype {}".format(dtype))
 
-        big = 2 ** 8
-        self.valid_block = [0, 1, 2, 3, big - 4, big - 3, big - 2, big - 1]
-        self.overflow_block = [-1, -2, -3, -4, big, big + 1, big + 2, big + 3]
-        self.wrong_dtype_block = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
-
-        super().setUp()
-
-    @unittest.expectedFailure
-    def test_writting_wrong_dtype(self):
-        bad_n5 = pyn5.open(self.root, self.dataset, "FLOAT64")
-        try:
-            bad_n5.write_block([0, 0, 0], [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8])
-            self.fail("Expected TypeError")
-        except TypeError:
-            pass
+    return info
 
 
-class TestU16(BaseTestCase.BaseTest):
-    def setUp(self):
-        self.dtype = "UINT16"
-
-        big = 2 ** 16
-        self.valid_block = [0, 1, 2, 3, big - 4, big - 3, big - 2, big - 1]
-        self.overflow_block = [-1, -2, -3, -4, big, big + 1, big + 2, big + 3]
-        self.wrong_dtype_block = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
-
-        super().setUp()
+def valid_block(dtype):
+    info = dtype_info(dtype)
+    return np.linspace(info.min, info.max, np.product(BLOCKSIZE), dtype=dtype).tolist()
 
 
-class TestU32(BaseTestCase.BaseTest):
-    def setUp(self):
-        self.dtype = "UINT32"
-
-        big = 2 ** 32
-        self.valid_block = [0, 1, 2, 3, big - 4, big - 3, big - 2, big - 1]
-        self.overflow_block = [-1, -2, -3, -4, big, big + 1, big + 2, big + 3]
-        self.wrong_dtype_block = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
-
-        super().setUp()
+def overflow_block(dtype):
+    info = dtype_info(dtype)
+    length = np.product(BLOCKSIZE) // 2
+    before = [info.min - i - 1 for i in range(length)]
+    after = [info.max + i + 1 for i in range(length)]
+    return before + after
 
 
-class TestU64(BaseTestCase.BaseTest):
-    def setUp(self):
-        self.dtype = "UINT64"
-
-        big = 2 ** 64
-        self.valid_block = [0, 1, 2, 3, big - 4, big - 3, big - 2, big - 1]
-        self.overflow_block = [-1, -2, -3, -4, big, big + 1, big + 2, big + 3]
-        self.wrong_dtype_block = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
-
-        super().setUp()
+def wrong_dtype_block(dtype):
+    if np.issubdtype(dtype, np.integer):
+        return np.linspace(0, 1, np.product(BLOCKSIZE)).tolist()
+    else:
+        return np.asarray(valid_block(dtype), dtype=np.dtype("int64")).tolist()
 
 
-class TestI8(BaseTestCase.BaseTest):
-    def setUp(self):
-        self.dtype = "INT8"
-
-        big = 2 ** 7
-        self.valid_block = [
-            1 - big,
-            2 - big,
-            3 - big,
-            4 - big,
-            big - 4,
-            big - 3,
-            big - 2,
-            big - 1,
-        ]
-        self.overflow_block = [
-            -big,
-            -1 - big,
-            -2 - big,
-            -3 - big,
-            big,
-            big + 1,
-            big + 2,
-            big + 3,
-        ]
-        self.wrong_dtype_block = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
-
-        super().setUp()
+def ravel_block(block):
+    return np.array(block).reshape(BLOCKSIZE, order="F")
 
 
-class TestI16(BaseTestCase.BaseTest):
-    def setUp(self):
-        self.dtype = "INT16"
+def test_read_write_valid(ds_dtype):
+    ds, dtype = ds_dtype
+    block_idx = [0, 0, 0]
 
-        big = 2 ** 15
-        self.valid_block = [
-            1 - big,
-            2 - big,
-            3 - big,
-            4 - big,
-            big - 4,
-            big - 3,
-            big - 2,
-            big - 1,
-        ]
-        self.overflow_block = [
-            -big,
-            -1 - big,
-            -2 - big,
-            -3 - big,
-            big,
-            big + 1,
-            big + 2,
-            big + 3,
-        ]
-        self.wrong_dtype_block = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
+    expected = valid_block(dtype)
+    ds.write_block(block_idx, expected)
 
-        super().setUp()
+    np.testing.assert_equal(
+        ds.read_ndarray(block_idx, BLOCKSIZE), ravel_block(expected)
+    )
 
 
-class TestI32(BaseTestCase.BaseTest):
-    def setUp(self):
-        self.dtype = "INT32"
+def test_read_write_overflow(ds_dtype):
+    ds, dtype = ds_dtype
+    if np.issubdtype(dtype, np.floating):
+        pytest.xfail(
+            "Doesn't work properly for float types "
+            "since floats that are too large get converted to inf"
+        )
 
-        big = 2 ** 31
-        self.valid_block = [
-            1 - big,
-            2 - big,
-            3 - big,
-            4 - big,
-            big - 4,
-            big - 3,
-            big - 2,
-            big - 1,
-        ]
-        self.overflow_block = [
-            -big,
-            -1 - big,
-            -2 - big,
-            -3 - big,
-            big,
-            big + 1,
-            big + 2,
-            big + 3,
-        ]
-        self.wrong_dtype_block = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
+    block = overflow_block(dtype)
 
-        super().setUp()
+    with pytest.raises(OverflowError):
+        ds.write_block([1, 1, 1], block)
+
+    np.testing.assert_equal(ds.read_ndarray([2, 2, 2], BLOCKSIZE), np.zeros(BLOCKSIZE))
 
 
-class TestI64(BaseTestCase.BaseTest):
-    def setUp(self):
-        self.dtype = "INT64"
+def test_read_write_wrong_dtype(ds_dtype):
+    ds, dtype = ds_dtype
+    if np.issubdtype(dtype, np.floating):
+        pytest.xfail(
+            "Doesn't work properly for float types "
+            "since ints in lists don't hold their type"
+        )
 
-        big = 2 ** 63
-        self.valid_block = [
-            1 - big,
-            2 - big,
-            3 - big,
-            4 - big,
-            big - 4,
-            big - 3,
-            big - 2,
-            big - 1,
-        ]
-        self.overflow_block = [
-            -big,
-            -1 - big,
-            -2 - big,
-            -3 - big,
-            big,
-            big + 1,
-            big + 2,
-            big + 3,
-        ]
-        self.wrong_dtype_block = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
+    block = wrong_dtype_block(dtype)
 
-        super().setUp()
+    with pytest.raises(TypeError):
+        ds.write_block([2, 2, 2], block)
 
-
-class TestF32(BaseTestCase.BaseTest):
-    def setUp(self):
-        self.dtype = "FLOAT32"
-
-        self.valid_block = [
-            -3.3999999521443642e38,
-            -1.199999978106707e-38,
-            1.199999978106707e-38,
-            3.3999999521443642e38,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-        ]
-
-        big = 1.5e40
-        self.overflow_block = [
-            -big,
-            -1 - big,
-            -2 - big,
-            -3 - big,
-            big,
-            big + 1,
-            big + 2,
-            big + 3,
-        ]
-        self.wrong_dtype_block = [1, 2, 3, 4, 5, 6, 7, 8]
-
-        super().setUp()
-
-    @unittest.expectedFailure
-    def test_read_write_overflow(self):
-        super().test_read_write_overflow(self)
-
-    @unittest.expectedFailure
-    def test_read_write_wrong_dtype(self):
-        super().test_read_write_wrong_dtype(self)
-
-
-class TestF64(BaseTestCase.BaseTest):
-    def setUp(self):
-        self.dtype = "FLOAT64"
-
-        self.valid_block = [-2.3e-308, -1.7e308, 1.7e308, 2.3e-308, 0.0, 0.0, 0.0, 0.0]
-
-        big = 1.5e600
-        self.overflow_block = [
-            -big,
-            -1 - big,
-            -2 - big,
-            -3 - big,
-            big,
-            big + 1,
-            big + 2,
-            big + 3,
-        ]
-        self.wrong_dtype_block = [1, 2, 3, 4, 5, 6, 7, 8]
-
-        super().setUp()
-
-    @unittest.expectedFailure
-    def test_read_write_overflow(self):
-        super().test_read_write_overflow(self)
-
-    @unittest.expectedFailure
-    def test_read_write_wrong_dtype(self):
-        super().test_read_write_wrong_dtype(self)
+    np.testing.assert_equal(ds.read_ndarray([4, 4, 4], BLOCKSIZE), np.zeros(BLOCKSIZE))
 
 
 class TestPythonReadWrite(unittest.TestCase):
@@ -382,16 +163,20 @@ class TestPythonReadWrite(unittest.TestCase):
         data[1, :, 0] = 2
         data[2, :, 0] = 3
         self.n5.write_ndarray(np.array([0, 0, 0]), data, 0)
-        self.assertTrue(np.all(
-            self.n5.read_ndarray(np.array([1, 0, 0]), np.array([1, 7, 1])) == 2))
+        self.assertTrue(
+            np.all(self.n5.read_ndarray(np.array([1, 0, 0]), np.array([1, 7, 1])) == 2)
+        )
         np.testing.assert_equal(
             self.n5.read_ndarray(np.array([0, 0, 0]), np.array([3, 1, 1])).flatten(),
-            np.array([1, 2, 3]))
+            np.array([1, 2, 3]),
+        )
 
         # test writing data in non block shapes
         data = np.array(range(6), dtype=np.uint8).reshape([1, 2, 3])
         self.n5.write_ndarray(np.array([0, 0, 0]), data, 0)
 
-        self.assertTrue(np.array_equal(
-            self.n5.read_ndarray(np.array([0, 0, 0]), np.array([1, 2, 3])),
-            data))
+        self.assertTrue(
+            np.array_equal(
+                self.n5.read_ndarray(np.array([0, 0, 0]), np.array([1, 2, 3])), data
+            )
+        )
