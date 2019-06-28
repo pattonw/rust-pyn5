@@ -5,8 +5,8 @@ extern crate numpy;
 #[macro_use]
 extern crate pyo3;
 
-use n5::prelude::*;
 use n5::ndarray::prelude::*;
+use n5::prelude::*;
 use numpy::{IntoPyArray, PyArrayDyn};
 use pyo3::exceptions;
 use pyo3::prelude::*;
@@ -31,14 +31,16 @@ fn create_dataset(
         "INT64" => DataType::INT64,
         "FLOAT32" => DataType::FLOAT32,
         "FLOAT64" => DataType::FLOAT64,
-        _ => return Err(exceptions::ValueError::py_err(format!(
-            "Datatype {} is not supported. Please choose from {:#?}",
-            dtype,
-            (
-                "UINT8", "UINT16", "UINT32", "UINT64", "INT8", "INT16", "INT32", "INT64",
-                "FLOAT32", "FLOAT64"
-            )
-        ))),
+        _ => {
+            return Err(exceptions::ValueError::py_err(format!(
+                "Datatype {} is not supported. Please choose from {:#?}",
+                dtype,
+                (
+                    "UINT8", "UINT16", "UINT32", "UINT64", "INT8", "INT16", "INT32", "INT64",
+                    "FLOAT32", "FLOAT64"
+                )
+            )))
+        }
     };
 
     let n = N5Filesystem::open_or_create(root_path)?;
@@ -109,51 +111,58 @@ macro_rules! dataset {
                 translation: Vec<i64>,
                 dimensions: Vec<i64>,
             ) -> PyResult<Py<PyArrayDyn<$d_type>>> {
-                let bounding_box = BoundingBox::new(translation.into(), dimensions.into());
+                let arr = py.allow_threads(move || {
+                    let bounding_box = BoundingBox::new(translation.into(), dimensions.into());
 
-                let arr = self
-                    .n5
-                    .read_ndarray::<$d_type>(&self.path, &self.attr, &bounding_box)?;
+                    self.n5
+                        .read_ndarray::<$d_type>(&self.path, &self.attr, &bounding_box)
+                })?;
                 Ok(arr.into_pyarray(py).to_owned())
             }
 
             fn write_ndarray(
                 &self,
+                py: Python,
                 translation: Vec<i64>,
                 arr: &PyArrayDyn<$d_type>,
                 fill_val: $d_type,
             ) -> PyResult<()> {
-                self.n5.write_ndarray::<$d_type>(
-                    &self.path, &self.attr, translation.into(),
-                    // TODO: because of n5's `write_ndarray` signature, must
-                    // pass a reference to an owned ndarray here. n5 could
-                    // instead take an array view, which may solve this.
-                    &arr.as_array().to_owned(), fill_val)?;
+                py.allow_threads(move || {
+                    self.n5.write_ndarray::<$d_type>(
+                        &self.path, &self.attr, translation.into(),
+                        // TODO: because of n5's `write_ndarray` signature, must
+                        // pass a reference to an owned ndarray here. n5 could
+                        // instead take an array view, which may solve this.
+                        &arr.as_array().to_owned(), fill_val
+                    )
+                })?;
                 Ok(())
             }
 
-            fn write_block(&self, position: Vec<i64>, data: Vec<$d_type>) -> PyResult<()> {
-                let block_shape = self.attr.get_block_size();
-                let block_size = self.attr.get_block_num_elements();
+            fn write_block(&self, py: Python, position: Vec<i64>, data: Vec<$d_type>) -> PyResult<()> {
+                py.allow_threads(move || {
+                    let block_shape = self.attr.get_block_size();
+                    let block_size = self.attr.get_block_num_elements();
 
-                if block_size != data.len() {
-                    Err(exceptions::ValueError::py_err(format!(
-                        "Data has length {} but dataset {} has blocks with shape {:?} and size {}",
-                        data.len(),
-                        self.path,
-                        block_shape,
-                        block_size
-                    )))
-                } else if self.n5.exists(&self.path) {
-                    let block_in = VecDataBlock::new(block_shape.into(), position.into(), data);
-                    self.n5.write_block(&self.path, &self.attr, &block_in)?;
-                    Ok(())
-                } else {
-                    Err(exceptions::ValueError::py_err(format!(
-                        "Dataset {} does not exist!",
-                        &self.path
-                    )))
-                }
+                    if block_size != data.len() {
+                        Err(exceptions::ValueError::py_err(format!(
+                            "Data has length {} but dataset {} has blocks with shape {:?} and size {}",
+                            data.len(),
+                            self.path,
+                            block_shape,
+                            block_size
+                        )))
+                    } else if self.n5.exists(&self.path) {
+                        let block_in = VecDataBlock::new(block_shape.into(), position.into(), data);
+                        self.n5.write_block(&self.path, &self.attr, &block_in)?;
+                        Ok(())
+                    } else {
+                        Err(exceptions::ValueError::py_err(format!(
+                            "Dataset {} does not exist!",
+                            &self.path
+                        )))
+                    }
+                })
             }
         }
     };
