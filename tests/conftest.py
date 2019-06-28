@@ -19,3 +19,9 @@ def ds_dtype(request, tmp_path):
 
     pyn5.create_dataset(n5_path, ds_name, DS_SIZE, BLOCKSIZE, dtype)
     yield pyn5.open(n5_path, ds_name, dtype, False), np.dtype(dtype.lower())
+
+
+@pytest.fixture
+def file_(tmp_path):
+    f = pyn5.File(tmp_path / "test.n5")
+    yield f
