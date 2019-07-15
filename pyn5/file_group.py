@@ -69,7 +69,7 @@ class Group(GroupBase):
                 "Set chunks=True to guess reasonable chunk sizes."
             )
             chunks = shape
-        elif chunks == True:
+        elif chunks is True:
             chunks = guess_chunks(shape, dtype.itemsize)
 
         dpath = self._path / name

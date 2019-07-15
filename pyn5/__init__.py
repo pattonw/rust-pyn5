@@ -39,5 +39,8 @@ __all__ = [
     "DatasetINT64",
     "DatasetFLOAT32",
     "DatasetFLOAT64",
-    "File"
+    "File",
+    "Group",
+    "Dataset",
+    "AttributeManager"
 ]

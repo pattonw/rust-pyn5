@@ -33,7 +33,7 @@ dataset_types = {
 
 
 class Dataset(DatasetBase):
-    def __init__(self, name: str, parent: "Group"):
+    def __init__(self, name: str, parent: "Group"):  # noqa would need circular imports
         """
 
         :param name: basename of the dataset
