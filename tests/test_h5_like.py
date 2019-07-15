@@ -11,6 +11,8 @@ from h5py_like import Mode, FileMixin
 from h5py_like.test_utils import FileTestBase, DatasetTestBase, GroupTestBase, ModeTestBase
 from pyn5 import File
 
+from .common import blocks_in, attrs_in
+
 ds_kwargs = deepcopy(DatasetTestBase.dataset_kwargs)
 ds_kwargs["chunks"] = (5, 5, 5)
 
@@ -68,9 +70,10 @@ class TestMode(ModeTestBase):
         return File(fpath, mode)
 
 
-def test_data_ordering(file_, h5_file, random):
-    data = random.random_sample((11, 12, 13))
-    ds_kwargs = {"shape": data.shape, "dtype": data.dtype, "chunks": (5, 5, 5)}
+def test_data_ordering(file_, h5_file):
+    shape = (5, 10, 15)
+    data = np.arange(np.product(shape)).reshape(shape)
+    ds_kwargs = {"shape": data.shape, "dtype": data.dtype, "chunks": (4, 4, 4)}
 
     for f in (file_, h5_file):
         n5_ds = f.create_dataset("ds", **ds_kwargs)
@@ -85,14 +88,25 @@ def test_created_dirs(file_):
 
     ds = file_.create_dataset("ds", data=data, chunks=(10, 10))
 
-    created = {
-        str(path.relative_to(ds._path))
-        for path in ds._path.glob('**/*')
-        if path.suffix != ".json"
-    }
-
-    assert created == {"0", "1", "0/0", "1/0"}
+    assert blocks_in(ds._path) == {"0", "1", "0/0", "1/0"}
 
     attrs = ds.attrs._read_attributes()
 
     assert list(ds.shape) == attrs["dimensions"][::-1]
+
+
+def test_vs_z5(file_, z5_file):
+    z5_path = Path(z5_file.path)
+    shape = (10, 20)
+    data = np.arange(np.product(shape)).reshape(shape)
+
+    for f in (file_, z5_file):
+        f.create_dataset("ds", data=data, chunks=(6, 7))
+
+    assert np.allclose(file_["ds"][:], z5_file["ds"][:])
+    assert blocks_in(file_["ds"]._path) == blocks_in(z5_path / "ds")
+
+    attrs = attrs_in(file_["ds"]._path)
+    z5_attrs = attrs_in(z5_path / "ds")
+    for key in ("blockSize", "dimensions", "dataType"):
+        assert attrs[key] == z5_attrs[key]

@@ -11,6 +11,7 @@ import pytest
 
 import pyn5
 
+from .common import blocks_in, attrs_in
 from .conftest import BLOCKSIZE
 
 
@@ -106,18 +107,37 @@ def test_data_ordering(tmp_path):
     ds.write_ndarray((0, 0), arr, 0)
 
     ds_path = root / "ds"
-    created = {
-        str(path.relative_to(ds_path))
-        for path in ds_path.glob('**/*')
-        if path.suffix != ".json"
-    }
 
-    assert created == {"0", "0/0", "0/1"}
+    assert blocks_in(ds_path) == {"0", "0/0", "0/1"}
 
     with open(ds_path / "attributes.json") as f:
         attrs = json.load(f)
 
     assert list(shape) == attrs["dimensions"]
+
+
+def test_vs_z5(tmp_path, z5_file):
+    root = tmp_path / "test.n5"
+
+    z5_path = Path(z5_file.path)
+    shape = (10, 20)
+    data = np.arange(np.product(shape)).reshape(shape)
+    chunks = (6, 7)
+
+    pyn5.create_dataset(str(root), "ds", shape, chunks, data.dtype.name.upper())
+    ds = pyn5.DatasetINT64(str(root), "ds", False)
+    ds.write_ndarray((0, 0), data, 0)
+
+    z5_file.create_dataset("ds", data=data, chunks=chunks)
+
+    assert np.allclose(ds.read_ndarray((0, 0), shape), z5_file["ds"][:])
+    assert blocks_in(root / "ds") != blocks_in(z5_path / "ds")
+
+    attrs = attrs_in(root / "ds")
+    z5_attrs = attrs_in(z5_path / "ds")
+    for key in ("blockSize", "dimensions"):
+        assert attrs[key] != z5_attrs[key]
+    assert attrs["dataType"] == z5_attrs["dataType"]
 
 
 class TestPythonReadWrite(unittest.TestCase):

@@ -8,6 +8,11 @@ try:
 except ImportError:
     h5py = None
 
+try:
+    import z5py
+except ImportError:
+    z5py = None
+
 DS_SIZE = (10, 10, 10)
 BLOCKSIZE = (2, 2, 2)
 
@@ -44,3 +49,11 @@ def h5_file(tmp_path):
 
     with h5py.File(tmp_path / "test.hdf5") as f:
         yield f
+
+
+@pytest.fixture
+def z5_file(tmp_path):
+    if not z5py:
+        pytest.skip("z5py not installed")
+
+    yield z5py.N5File(tmp_path / "test_z5.n5")
