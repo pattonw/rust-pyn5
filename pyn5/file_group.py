@@ -6,9 +6,10 @@ from typing import Iterator
 
 import numpy as np
 
-from h5py_like import GroupBase, FileMixin, AttributeManagerBase, Mode, mutation
+from h5py_like import GroupBase, FileMixin, Mode, mutation
 from h5py_like.common import Name
 from h5py_like.base import H5ObjectLike
+from h5py_like.shape_utils import guess_chunks
 from pyn5 import Dataset
 from pyn5.attributes import AttributeManager
 from .pyn5 import create_dataset
@@ -49,9 +50,6 @@ class Group(GroupBase):
     def _create_child_dataset(
         self, name, shape=None, dtype=None, data=None, chunks=None, **kwds
     ):
-        if chunks is None:
-            raise ValueError("'chunks' must be given")
-
         for key in kwds:
             warnings.warn(
                 f"pyn5 does not implement '{key}' argument for create_dataset; it will be ignored"
@@ -63,6 +61,16 @@ class Group(GroupBase):
             shape = data.shape
 
         dtype = np.dtype(dtype)
+
+        if chunks is None:
+            warnings.warn(
+                "chunks not set: entire dataset will be a single chunk. "
+                "This will be slow and inefficient. "
+                "Set chunks=True to guess reasonable chunk sizes."
+            )
+            chunks = shape
+        elif chunks == True:
+            chunks = guess_chunks(shape, dtype.itemsize)
 
         dpath = self._path / name
 
