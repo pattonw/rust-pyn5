@@ -3,6 +3,8 @@ import errno
 import json
 from contextlib import contextmanager
 from copy import deepcopy
+from functools import wraps
+
 from pathlib import Path
 
 from typing import Iterator, Any, Dict
@@ -20,6 +22,16 @@ class NumpyEncoder(json.JSONEncoder):
         if isinstance(obj, np.ndarray):
             return obj.tolist()
         return super().default(obj)
+
+
+def restrict_metadata(fn):
+    """Decorator for AttributeManager methods which prevents mutation of N5 metadata"""
+    @wraps(fn)
+    def wrapped(obj: AttributeManager, key, *args, **kwargs):
+        if obj._is_dataset() and key in obj._dataset_keys:
+            raise RuntimeError(f"N5 metadata (key '{key}') cannot be mutated")
+        return fn(obj, key, *args, **kwargs)
+    return mutation(wrapped)
 
 
 class AttributeManager(AttributeManagerBase):
@@ -44,6 +56,7 @@ class AttributeManager(AttributeManagerBase):
         """
         self._path = Path(dpath) / "attributes.json"
         self._dump_kwargs = deepcopy(self._dump_kwargs)
+        self._has_dataset_keys_ = None
         super().__init__(mode)
 
     @classmethod
@@ -56,12 +69,12 @@ class AttributeManager(AttributeManagerBase):
         """
         return cls(parent._path, parent.mode)
 
-    @mutation
+    @restrict_metadata
     def __setitem__(self, k, v) -> None:
         with self._open_attributes(True) as attrs:
             attrs[k] = v
 
-    @mutation
+    @restrict_metadata
     def __delitem__(self, v) -> None:
         with self._open_attributes(True) as attrs:
             del attrs[v]
@@ -95,21 +108,40 @@ class AttributeManager(AttributeManagerBase):
         with self._open_attributes() as attrs:
             return item in attrs
 
-    def _is_dataset(self):
-        with self._open_attributes() as attrs:
-            return self._dataset_keys.issubset(attrs)
+    def _is_dataset(self) -> bool:
+        if self._has_dataset_keys_ is None:
+            try:
+                with open(self._path, "r") as f:
+                    self._has_dataset_keys_ = self._dataset_keys.issubset(json.load(f))
+            except ValueError:
+                self._has_dataset_keys_ = False
+            except IOError as e:
+                if e.errno == errno.ENOENT:
+                    self._has_dataset_keys_ = False
+                else:
+                    raise
+        return self._has_dataset_keys_
 
     @contextmanager
     def _open_attributes(self, write: bool = False) -> Dict[str, Any]:
         """Return attributes as a context manager.
 
+        N5 metadata keys are stripped from the dict.
+
         :param write: Whether to write changes to the attributes dict.
-        :return: attributes as a dict (including N5 metadata)
+        :return: attributes as a dict
         """
         attributes = self._read_attributes()
+
+        if self._is_dataset():
+            hidden_attrs = {k: attributes.pop(k) for k in self._dataset_keys}
+        else:
+            hidden_attrs = dict()
+
         yield attributes
         if write:
-            self._write_attributes(attributes)
+            hidden_attrs.update(attributes)
+            self._write_attributes(hidden_attrs)
 
     def _read_attributes(self):
         """Return attributes or an empty dict if they do not exist"""

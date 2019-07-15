@@ -45,10 +45,16 @@ class Dataset(DatasetBase):
         self._path = self.parent._path / name
         self._attrs = AttributeManager.from_parent(self)
 
-        with self._attrs._open_attributes() as attrs:
+        attrs = self._attrs._read_attributes()
+
+        try:
             self._shape = tuple(attrs["dimensions"][::-1])
-            self._dtype = np.dtype(self.attrs["dataType"].lower())
-            self._chunks = tuple(self.attrs["blockSize"][::-1])
+            self._dtype = np.dtype(attrs["dataType"].lower())
+            self._chunks = tuple(attrs["blockSize"][::-1])
+        except KeyError:
+            raise ValueError(
+                f"Not a dataset (missing metadata key): " + str(self._path)
+            )
 
         self._impl = dataset_types[self.dtype](
             str(self.file._path),

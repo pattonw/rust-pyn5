@@ -1,3 +1,6 @@
+import json
+
+import pytest
 import shutil
 import tempfile
 from copy import deepcopy
@@ -23,7 +26,30 @@ class TestGroup(GroupTestBase):
 
 class TestDataset(DatasetTestBase):
     dataset_kwargs = ds_kwargs
-    pass
+
+    def test_has_metadata(self, file_):
+        ds = self.dataset(file_)
+        with open(ds.attrs._path) as f:
+            attrs = json.load(f)
+        for key in ds.attrs._dataset_keys:
+            assert key in attrs
+
+    def test_no_return_metadata(self, file_):
+        ds = self.dataset(file_)
+
+        for key in ds.attrs._dataset_keys:
+            assert key not in ds.attrs
+            assert key not in dict(ds.attrs)
+
+    def test_no_mutate_metadata(self, file_):
+        ds = self.dataset(file_)
+
+        for key in ds.attrs._dataset_keys:
+            with pytest.raises(RuntimeError):
+                ds.attrs[key] = "not a datatype"
+
+            with pytest.raises(RuntimeError):
+                del ds.attrs[key]
 
 
 class TestMode(ModeTestBase):
