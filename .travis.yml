@@ -1,6 +1,7 @@
 language: python
+dist: xenial
 python:
-  - 3.5
+  - 3.7
 
 stages:
   - test
@@ -36,20 +37,18 @@ deploy_template: &deploy_template
 
 jobs:
   include:
-    - <<: *test_template
-      python: 3.5
-    - <<: *test_template
-      python: 3.6
+#    - <<: *test_template
+#      python: 3.5
+#    - <<: *test_template
+#      python: 3.6
     - <<: *test_template
       python: 3.7
-      dist: xenial
-      sudo: required
-    - <<: *deploy_template
-      env:
-        - CIBW_BUILD=cp35-*
-    - <<: *deploy_template
-      env:
-        - CIBW_BUILD=cp36-*
+#    - <<: *deploy_template
+#      env:
+#        - CIBW_BUILD=cp35-*
+#    - <<: *deploy_template
+#      env:
+#        - CIBW_BUILD=cp36-*
     - <<: *deploy_template
       env:
         - CIBW_BUILD=cp37-*
