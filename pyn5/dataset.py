@@ -76,7 +76,7 @@ class Dataset(DatasetBase):
 
     @property
     def maxshape(self) -> Tuple[int, ...]:
-        raise NotImplementedError()
+        return self.shape
 
     @property
     def fillvalue(self) -> Any:
