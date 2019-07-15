@@ -12,3 +12,4 @@ numpy==1.16.4
 pytest==4.6.3
 pytest-runner==5.1
 h5py_like==0.3.0
+h5py==2.9.0
