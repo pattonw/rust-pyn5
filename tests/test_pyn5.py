@@ -2,8 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """Tests for `pyn5` package."""
-
-
+import json
 import unittest
 from pathlib import Path
 import shutil
@@ -92,6 +91,33 @@ def test_read_write_wrong_dtype(ds_dtype):
         ds.write_block([2, 2, 2], block)
 
     np.testing.assert_equal(ds.read_ndarray([4, 4, 4], BLOCKSIZE), np.zeros(BLOCKSIZE))
+
+
+def test_data_ordering(tmp_path):
+    root = tmp_path / "test.n5"
+
+    shape = (10, 20)
+    chunks = (10, 10)
+
+    pyn5.create_dataset(str(root), "ds", shape, chunks, "UINT8")
+    ds = pyn5.DatasetUINT8(str(root), "ds", False)
+    arr = np.array(ds.read_ndarray((0, 0), shape))
+    arr += 1
+    ds.write_ndarray((0, 0), arr, 0)
+
+    ds_path = root / "ds"
+    created = {
+        str(path.relative_to(ds_path))
+        for path in ds_path.glob('**/*')
+        if path.suffix != ".json"
+    }
+
+    assert created == {"0", "0/0", "0/1"}
+
+    with open(ds_path / "attributes.json") as f:
+        attrs = json.load(f)
+
+    assert list(shape) == attrs["dimensions"]
 
 
 class TestPythonReadWrite(unittest.TestCase):
