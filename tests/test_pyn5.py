@@ -128,7 +128,7 @@ def test_vs_z5(tmp_path, z5_file):
     ds = pyn5.DatasetINT64(str(root), "ds", False)
     ds.write_ndarray((0, 0), data, 0)
 
-    z5_file.create_dataset("ds", data=data, chunks=chunks)
+    z5_file.create_dataset("ds", data=data, chunks=(6, 7), compression="gzip", level=-1)
 
     assert np.allclose(ds.read_ndarray((0, 0), shape), z5_file["ds"][:])
     assert blocks_in(root / "ds") != blocks_in(z5_path / "ds")
@@ -137,7 +137,9 @@ def test_vs_z5(tmp_path, z5_file):
     z5_attrs = attrs_in(z5_path / "ds")
     for key in ("blockSize", "dimensions"):
         assert attrs[key] != z5_attrs[key]
-    assert attrs["dataType"] == z5_attrs["dataType"]
+
+    for key in ("dataType", "compression"):
+        assert attrs[key] == z5_attrs[key]
 
 
 class TestPythonReadWrite(unittest.TestCase):

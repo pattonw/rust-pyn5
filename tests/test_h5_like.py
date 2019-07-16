@@ -100,13 +100,13 @@ def test_vs_z5(file_, z5_file):
     shape = (10, 20)
     data = np.arange(np.product(shape)).reshape(shape)
 
-    for f in (file_, z5_file):
-        f.create_dataset("ds", data=data, chunks=(6, 7))
+    file_.create_dataset("ds", data=data, chunks=(6, 7))
+    z5_file.create_dataset("ds", data=data, chunks=(6, 7), compression="gzip", level=-1)
 
     assert np.allclose(file_["ds"][:], z5_file["ds"][:])
     assert blocks_in(file_["ds"]._path) == blocks_in(z5_path / "ds")
 
     attrs = attrs_in(file_["ds"]._path)
     z5_attrs = attrs_in(z5_path / "ds")
-    for key in ("blockSize", "dimensions", "dataType"):
+    for key in ("blockSize", "dimensions", "dataType", "compression"):
         assert attrs[key] == z5_attrs[key]
