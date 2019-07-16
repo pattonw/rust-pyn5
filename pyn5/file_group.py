@@ -15,6 +15,7 @@ from pyn5.attributes import AttributeManager
 from .pyn5 import create_dataset
 
 N5_VERSION = "2.0.2"
+N5_VERSION_INFO = tuple(int(i) for i in N5_VERSION.split('.'))
 
 
 class Group(GroupBase):
@@ -200,6 +201,15 @@ class File(FileMixin, Group):
             attrs["n5"] = N5_VERSION
         else:
             version = attrs.get("n5")
-            if version != N5_VERSION:
+            if not version:
                 raise ValueError(f"Expected N5 version '{N5_VERSION}', got {version}")
+
+            version_info = tuple(int(i) for i in version.split('.'))
+
+            if version_info[0] != N5_VERSION_INFO[0]:
+                raise ValueError(f"Expected N5 version '{N5_VERSION}', got {version}")
+            elif version_info[1] != N5_VERSION_INFO[1]:
+                warnings.warn(f"Expected N5 version '{N5_VERSION}', got {version};"
+                              f" trying to open anyway")
+
         return created
