@@ -8,7 +8,7 @@ stages:
     if: tag IS present
 env:
   global:
-  - TRAVIS_RUST_VERSION=nightly
+  - TRAVIS_RUST_VERSION=nightly-2019-07-01
   - RUST_BACKTRACE=1
   - TWINE_USERNAME=pattonw
 
