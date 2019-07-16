@@ -8,10 +8,7 @@ try:
 except ImportError:
     h5py = None
 
-try:
-    import z5py
-except ImportError:
-    z5py = None
+from .common import z5py
 
 DS_SIZE = (10, 10, 10)
 BLOCKSIZE = (2, 2, 2)

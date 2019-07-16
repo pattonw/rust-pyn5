@@ -11,7 +11,7 @@ import pytest
 
 import pyn5
 
-from .common import blocks_in, attrs_in, blocks_hash
+from .common import blocks_in, attrs_in, blocks_hash, z5py
 from .conftest import BLOCKSIZE
 
 
@@ -141,7 +141,13 @@ def test_vs_z5(tmp_path, z5_file):
     for key in ("dataType", "compression"):
         assert attrs[key] == z5_attrs[key]
 
-    assert blocks_hash(root) != blocks_hash(z5_path)
+    data2 = pyn5.DatasetINT64(str(z5_path), "ds", False).read_ndarray((0, 0), shape)
+    data3 = z5py.N5File(root)["ds"][:]
+
+    assert not all([
+        np.array_equal(data, data2),
+        np.array_equal(data, data3)
+    ])
 
 
 class TestPythonReadWrite(unittest.TestCase):

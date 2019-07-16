@@ -2,6 +2,11 @@ import json
 import hashlib
 from typing import NamedTuple, Optional, Tuple
 
+try:
+    import z5py
+except ImportError:
+    z5py = None
+
 
 def blocks_in(dpath):
     return {
@@ -11,12 +16,17 @@ def blocks_in(dpath):
     }
 
 
-def blocks_hash(dpath):
-    md5 = hashlib.md5()
+def iter_block_paths(dpath):
     for fpath in sorted(
         fpath for fpath in dpath.glob('**/*')
         if fpath.is_file() and fpath.suffix != ".json"
     ):
+        yield fpath
+
+
+def blocks_hash(dpath):
+    md5 = hashlib.md5()
+    for fpath in iter_block_paths(dpath):
         md5.update(str(fpath.relative_to(dpath)).encode())
         md5.update(fpath.read_bytes())
 
