@@ -11,7 +11,7 @@ import pytest
 
 import pyn5
 
-from .common import blocks_in, attrs_in
+from .common import blocks_in, attrs_in, blocks_hash
 from .conftest import BLOCKSIZE
 
 
@@ -140,6 +140,8 @@ def test_vs_z5(tmp_path, z5_file):
 
     for key in ("dataType", "compression"):
         assert attrs[key] == z5_attrs[key]
+
+    assert blocks_hash(root) != blocks_hash(z5_path)
 
 
 class TestPythonReadWrite(unittest.TestCase):

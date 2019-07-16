@@ -11,7 +11,7 @@ from h5py_like import Mode, FileMixin
 from h5py_like.test_utils import FileTestBase, DatasetTestBase, GroupTestBase, ModeTestBase
 from pyn5 import File
 
-from .common import blocks_in, attrs_in
+from .common import blocks_in, attrs_in, blocks_hash
 
 ds_kwargs = deepcopy(DatasetTestBase.dataset_kwargs)
 ds_kwargs["chunks"] = (5, 5, 5)
@@ -110,3 +110,5 @@ def test_vs_z5(file_, z5_file):
     z5_attrs = attrs_in(z5_path / "ds")
     for key in ("blockSize", "dimensions", "dataType", "compression"):
         assert attrs[key] == z5_attrs[key]
+
+    assert blocks_hash(file_._path) == blocks_hash(z5_path)
