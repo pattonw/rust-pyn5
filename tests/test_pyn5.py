@@ -2,16 +2,17 @@
 # -*- coding: utf-8 -*-
 
 """Tests for `pyn5` package."""
-import json
 import unittest
 from pathlib import Path
 import shutil
+import json
+
 import numpy as np
 import pytest
 
 import pyn5
 
-from .common import blocks_in, attrs_in, blocks_hash, z5py
+from .common import blocks_in, attrs_in, z5py
 from .conftest import BLOCKSIZE
 
 
@@ -92,6 +93,43 @@ def test_read_write_wrong_dtype(ds_dtype):
         ds.write_block([2, 2, 2], block)
 
     np.testing.assert_equal(ds.read_ndarray([4, 4, 4], BLOCKSIZE), np.zeros(BLOCKSIZE))
+
+
+def test_compression(tmp_path, compression_dict):
+    root = tmp_path / "test.n5"
+
+    data = np.arange(100, dtype=np.uint8).reshape((10, 10))
+
+    pyn5.create_dataset(
+        str(root), "ds", data.shape, (5, 5), data.dtype.name.upper(),
+        json.dumps(compression_dict)
+    )
+
+    with open(root / "ds" / "attributes.json") as f:
+        attrs = json.load(f)
+
+    assert attrs["compression"] == compression_dict
+
+    ds = pyn5.DatasetUINT8(str(root), "ds", True)
+    ds.write_ndarray((0, 0), data, 0)
+
+
+def test_default_compression(tmp_path):
+    root = tmp_path / "test.n5"
+
+    data = np.arange(100, dtype=np.uint8).reshape((10, 10))
+
+    pyn5.create_dataset(
+        str(root), "ds", data.shape, (5, 5), data.dtype.name.upper(),
+    )
+
+    with open(root / "ds" / "attributes.json") as f:
+        attrs = json.load(f)
+
+    assert attrs["compression"] == {"type": "gzip", "level": -1}
+
+    ds = pyn5.DatasetUINT8(str(root), "ds", True)
+    ds.write_ndarray((0, 0), data, 0)
 
 
 def test_data_ordering(tmp_path):

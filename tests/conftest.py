@@ -33,6 +33,17 @@ def ds_dtype(request, tmp_path):
     yield pyn5.open(n5_path, ds_name, dtype, False), np.dtype(dtype.lower())
 
 
+@pytest.fixture(params=[
+    {"type": "raw"},
+    {"type": "bzip2", "blockSize": 5},
+    {"type": "gzip", "level": 5},
+    {"type": "lz4", "blockSize": 32768},
+    {"type": "xz", "preset": 3},
+], ids=lambda d: d.get("type", "raw"))
+def compression_dict(request):
+    yield request.param
+
+
 @pytest.fixture
 def file_(tmp_path):
     f = pyn5.File(tmp_path / "test.n5")
