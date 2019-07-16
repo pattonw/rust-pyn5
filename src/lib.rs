@@ -19,6 +19,7 @@ fn create_dataset(
     dimensions: Vec<i64>,
     block_size: Vec<i32>,
     dtype: &str,
+    compression: Option<&str>,
 ) -> PyResult<()> {
     let dtype = match dtype {
         "UINT8" => DataType::UINT8,
@@ -45,11 +46,25 @@ fn create_dataset(
 
     let n = N5Filesystem::open_or_create(root_path)?;
     if !n.exists(path_name) {
+        let compression_type: CompressionType = match compression {
+            None => CompressionType::new::<compression::gzip::GzipCompression>(),
+            Some(s) => {
+                match serde_json::from_str(s) {
+                    Ok(c) => c,
+                    Err(_e) => return Err(
+                        exceptions::ValueError::py_err(
+                            format!("Could not deserialize compression: {}", s)
+                        )
+                    )
+                }
+            }
+        };
+
         let data_attrs = DatasetAttributes::new(
             dimensions.into(),
             block_size.into(),
             dtype,
-            CompressionType::new::<compression::gzip::GzipCompression>(),
+            compression_type,
         );
         n.create_dataset(path_name, &data_attrs)?;
         Ok(())
