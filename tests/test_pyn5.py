@@ -12,7 +12,7 @@ import pytest
 
 import pyn5
 
-from .common import blocks_in, attrs_in, z5py
+from .common import blocks_in, attrs_in, z5py, blocks_hash
 from .conftest import BLOCKSIZE
 
 
@@ -155,6 +155,7 @@ def test_data_ordering(tmp_path):
 
 
 def test_vs_z5(tmp_path, z5_file):
+    """Check different dimensions, same dtype/compression as z5"""
     root = tmp_path / "test.n5"
 
     z5_path = Path(z5_file.path)
@@ -186,6 +187,26 @@ def test_vs_z5(tmp_path, z5_file):
         np.array_equal(data, data2),
         np.array_equal(data, data3)
     ])
+
+
+def test_vs_z5_hash(tmp_path, z5_file):
+    """Check different block hashes to z5"""
+    root = tmp_path / "test.n5"
+
+    z5_path = Path(z5_file.path)
+    shape = (10, 20)
+    data = np.arange(np.product(shape)).reshape(shape)
+    chunks = (6, 7)
+
+    pyn5.create_dataset(
+        str(root), "ds", shape, chunks, data.dtype.name.upper(), json.dumps({"type": "raw"})
+    )
+    ds = pyn5.DatasetINT64(str(root), "ds", False)
+    ds.write_ndarray((0, 0), data, 0)
+
+    z5_file.create_dataset("ds", data=data, chunks=(6, 7), compression="raw")
+
+    assert blocks_hash(root) != blocks_hash(z5_path)
 
 
 class TestPythonReadWrite(unittest.TestCase):

@@ -12,7 +12,7 @@ from h5py_like import Mode, FileMixin
 from h5py_like.test_utils import FileTestBase, DatasetTestBase, GroupTestBase, ModeTestBase
 from pyn5 import File
 
-from .common import z5py
+from .common import z5py, blocks_hash
 from .common import blocks_in, attrs_in
 
 ds_kwargs = deepcopy(DatasetTestBase.dataset_kwargs)
@@ -98,6 +98,7 @@ def test_created_dirs(file_):
 
 
 def test_vs_z5(file_, z5_file):
+    """Check same as z5"""
     z5_path = Path(z5_file.path)
     shape = (10, 20)
     data = np.arange(np.product(shape)).reshape(shape)
@@ -113,11 +114,17 @@ def test_vs_z5(file_, z5_file):
     for key in ("blockSize", "dimensions", "dataType", "compression"):
         assert attrs[key] == z5_attrs[key]
 
-    data2 = pyn5.File(z5_path)["ds"][:]
-    data3 = z5py.N5File(file_._path)["ds"][:]
 
-    assert np.array_equal(data, data2)
-    assert np.array_equal(data2, data3)
+def test_vs_z5_hash(file_, z5_file):
+    """Check identical block contents to z5"""
+    z5_path = Path(z5_file.path)
+    shape = (10, 20)
+    data = np.arange(np.product(shape)).reshape(shape)
+
+    file_.create_dataset("ds", data=data, chunks=(6, 7), compression="raw")
+    z5_file.create_dataset("ds", data=data, chunks=(6, 7), compression="raw")
+
+    assert blocks_hash(file_._path) == blocks_hash(z5_path)
 
 
 def test_compression_opts(file_, compression_name_opt):
