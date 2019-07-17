@@ -7,12 +7,11 @@ import tempfile
 from copy import deepcopy
 from pathlib import Path
 
-import pyn5
 from h5py_like import Mode, FileMixin
 from h5py_like.test_utils import FileTestBase, DatasetTestBase, GroupTestBase, ModeTestBase
 from pyn5 import File
 
-from .common import z5py, blocks_hash
+from .common import blocks_hash
 from .common import blocks_in, attrs_in
 
 ds_kwargs = deepcopy(DatasetTestBase.dataset_kwargs)
