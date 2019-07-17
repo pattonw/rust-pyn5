@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 import pytest
 import numpy as np
 
@@ -41,7 +43,14 @@ def ds_dtype(request, tmp_path):
     {"type": "xz", "preset": 3},
 ], ids=lambda d: d.get("type", "raw"))
 def compression_dict(request):
-    yield request.param
+    yield deepcopy(request.param)
+
+
+@pytest.fixture
+def compression_name_opt(compression_dict):
+    name = compression_dict.pop("type")
+    arg = list(compression_dict.values()).pop() if compression_dict else None
+    yield name, arg
 
 
 @pytest.fixture

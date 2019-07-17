@@ -1,4 +1,7 @@
 from __future__ import annotations
+
+import json
+
 import shutil
 import warnings
 from pathlib import Path
@@ -16,6 +19,15 @@ from .pyn5 import create_dataset
 
 N5_VERSION = "2.0.2"
 N5_VERSION_INFO = tuple(int(i) for i in N5_VERSION.split('.'))
+
+
+compression_args = {
+    "raw": None,
+    "bzip2": "blockSize",
+    "gzip": "level",
+    "lz4": "blockSize",
+    "xz": "preset",
+}
 
 
 class Group(GroupBase):
@@ -49,7 +61,8 @@ class Group(GroupBase):
         return Group(name, self)
 
     def _create_child_dataset(
-        self, name, shape=None, dtype=None, data=None, chunks=None, **kwds
+        self, name, shape=None, dtype=None, data=None, chunks=None,
+        compression=None, compression_opts=None, **kwds
     ):
         for key in kwds:
             warnings.warn(
@@ -85,6 +98,23 @@ class Group(GroupBase):
             elif isinstance(obj, Group):
                 raise FileExistsError(f"Group found at {dpath}")
 
+        if compression:
+            try:
+                opt_name = compression_args[compression]
+            except KeyError:
+                raise ValueError(
+                    f"Unknown compression type '{compression}': "
+                    f"use one of {sorted(compression_args)}"
+                )
+
+            compression_dict = {"type": compression}
+            if compression_opts is not None:
+                compression_dict[opt_name] = compression_opts
+
+            compression_str = json.dumps(compression_dict)
+        else:
+            compression_str = None
+
         file_path = str(self.file.filename)
         create_dataset(
             file_path,
@@ -92,6 +122,7 @@ class Group(GroupBase):
             list(shape)[::-1],
             list(chunks)[::-1],
             dtype.name.upper(),
+            compression_str,
         )
 
         ds = Dataset(name, self)

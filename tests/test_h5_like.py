@@ -118,3 +118,19 @@ def test_vs_z5(file_, z5_file):
 
     assert np.array_equal(data, data2)
     assert np.array_equal(data2, data3)
+
+
+def test_compression_opts(file_, compression_name_opt):
+    compression, opt = compression_name_opt
+
+    shape = (10, 20)
+    data = np.arange(np.product(shape)).reshape(shape)
+
+    ds = file_.create_dataset(
+        "ds", data=data, chunks=(10, 10), compression=compression, compression_opts=opt
+    )
+
+    compression_dict = ds.attrs._read_attributes()["compression"]
+    assert compression_dict.pop("type") == compression
+    if opt is not None:
+        assert list(compression_dict.values()).pop() == opt
