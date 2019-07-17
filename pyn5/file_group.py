@@ -11,21 +11,14 @@ from h5py_like import GroupBase, FileMixin, Mode, mutation
 from h5py_like.common import Name
 from h5py_like.base import H5ObjectLike
 from h5py_like.shape_utils import guess_chunks
+
 from pyn5 import Dataset
-from pyn5.attributes import AttributeManager
+from .common import compression_args
+from .attributes import AttributeManager
 from .pyn5 import create_dataset
 
 N5_VERSION = "2.0.2"
 N5_VERSION_INFO = tuple(int(i) for i in N5_VERSION.split('.'))
-
-
-compression_args = {
-    "raw": None,
-    "bzip2": "blockSize",
-    "gzip": "level",
-    "lz4": "blockSize",
-    "xz": "preset",
-}
 
 
 class Group(GroupBase):
@@ -105,7 +98,7 @@ class Group(GroupBase):
                     f"use one of {sorted(compression_args)}"
                 )
 
-            compression_dict = {"type": compression}
+            compression_dict = {"type": str(compression)}
             if compression_opts is not None:
                 compression_dict[opt_name] = compression_opts
 
