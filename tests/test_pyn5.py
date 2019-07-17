@@ -132,6 +132,26 @@ def test_default_compression(tmp_path):
     ds.write_ndarray((0, 0), data, 0)
 
 
+def test_default_compression_opts(tmp_path, compression_name_opt):
+    name, _ = compression_name_opt
+    root = tmp_path / "test.n5"
+
+    data = np.arange(100, dtype=np.uint8).reshape((10, 10))
+
+    pyn5.create_dataset(
+        str(root), "ds", data.shape, (5, 5), data.dtype.name.upper(),
+        json.dumps({"type": name})
+    )
+
+    with open(root / "ds" / "attributes.json") as f:
+        attrs = json.load(f)
+
+    assert attrs["compression"]["type"] == name
+
+    ds = pyn5.DatasetUINT8(str(root), "ds", True)
+    ds.write_ndarray((0, 0), data, 0)
+
+
 def test_data_ordering(tmp_path):
     root = tmp_path / "test.n5"
 
