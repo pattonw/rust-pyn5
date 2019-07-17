@@ -224,7 +224,7 @@ class File(FileMixin, Group):
         else:
             version = attrs.get("n5")
             if not version:
-                raise ValueError(f"Expected N5 version '{N5_VERSION}', got {version}")
+                raise ValueError(f"No N5 version found in {attrs._path}")
 
             version_info = tuple(int(i) for i in version.split('.'))
 
