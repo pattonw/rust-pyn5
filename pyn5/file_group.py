@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import json
 
 import shutil
@@ -31,7 +29,7 @@ compression_args = {
 
 
 class Group(GroupBase):
-    def __init__(self, name: str, parent: Group):
+    def __init__(self, name: str, parent: "Group"):
         """
 
         :param name: basename of the group
