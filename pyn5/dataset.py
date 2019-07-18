@@ -1,8 +1,11 @@
+from copy import copy
+
 from typing import Union, Tuple, Optional, Any
 
 import numpy as np
 
 from h5py_like import DatasetBase, AttributeManagerBase, mutation, Name
+from h5py_like.shape_utils import thread_read_fn, thread_write_fn
 from pyn5.attributes import AttributeManager
 from .pyn5 import (
     DatasetUINT8,
@@ -33,6 +36,8 @@ dataset_types = {
 
 
 class Dataset(DatasetBase):
+    threads = None
+
     def __init__(self, name: str, parent: "Group"):  # noqa would need circular imports
         """
 
@@ -44,6 +49,7 @@ class Dataset(DatasetBase):
         self._parent = parent
         self._path = self.parent._path / name
         self._attrs = AttributeManager.from_parent(self)
+        self.threads = copy(self.threads)
 
         attrs = self._attrs._read_attributes()
 
@@ -90,19 +96,45 @@ class Dataset(DatasetBase):
         raise NotImplementedError()
 
     def __getitem__(self, args) -> np.ndarray:
-        def fn(translation, dimensions):
+        def inner_fn(translation, dimensions):
             return self._impl.read_ndarray(
                 translation[::-1], dimensions[::-1]
             ).transpose()
+
+        if self.threads:
+            def fn(translation, dimensions):
+                return thread_read_fn(
+                    translation,
+                    dimensions,
+                    self.chunks,
+                    self.shape,
+                    inner_fn,
+                    self.threads
+                )
+        else:
+            fn = inner_fn
 
         return self._getitem(args, fn, self._astype)
 
     @mutation
     def __setitem__(self, args, val):
-        def fn(offset, arr):
+        def inner_fn(offset, arr):
             return self._impl.write_ndarray(
                 offset[::-1], arr.transpose(), self.fillvalue
             )
+
+        if self.threads:
+            def fn(offset, arr):
+                return thread_write_fn(
+                    offset,
+                    arr,
+                    self.chunks,
+                    self.shape,
+                    inner_fn,
+                    self.threads
+                )
+        else:
+            fn = inner_fn
 
         return self._setitem(args, val, fn)
 

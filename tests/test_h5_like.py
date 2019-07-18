@@ -8,13 +8,15 @@ from copy import deepcopy
 from pathlib import Path
 
 from h5py_like import Mode, FileMixin
-from h5py_like.test_utils import FileTestBase, DatasetTestBase, GroupTestBase, ModeTestBase
+from h5py_like.test_utils import (
+    FileTestBase, ThreadedDatasetTestBase, GroupTestBase, ModeTestBase,
+)
 from pyn5 import File
 
 from .common import blocks_hash
 from .common import blocks_in, attrs_in
 
-ds_kwargs = deepcopy(DatasetTestBase.dataset_kwargs)
+ds_kwargs = deepcopy(ThreadedDatasetTestBase.dataset_kwargs)
 ds_kwargs["chunks"] = (5, 5, 5)
 
 
@@ -28,8 +30,8 @@ class TestGroup(GroupTestBase):
     pass
 
 
-class TestDataset(DatasetTestBase):
-    dataset_kwargs = ds_kwargs
+class TestDataset(ThreadedDatasetTestBase):
+    dataset_kwargs = deepcopy(ThreadedDatasetTestBase.dataset_kwargs)
 
     def test_has_metadata(self, file_):
         ds = self.dataset(file_)
