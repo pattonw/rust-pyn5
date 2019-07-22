@@ -9,5 +9,5 @@ twine==1.13.0
 Sphinx==2.1.1
 setuptools_rust==0.10.6
 numpy==1.16.4
-pytest==4.6.3
+pytest==5.0.1
 pytest-runner==5.1
