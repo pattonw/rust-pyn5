@@ -6,6 +6,8 @@ __author__ = """William Hunter Patton"""
 __email__ = "pattonw@hhmi.org"
 __version__ = "0.1.0"
 
+from h5py_like import Mode
+
 from .python_wrappers import open, read, write
 from .pyn5 import (
     DatasetUINT8,
@@ -20,6 +22,10 @@ from .pyn5 import (
     DatasetFLOAT64,
     create_dataset,
 )
+from .attributes import AttributeManager
+from .dataset import Dataset
+from .file_group import File, Group
+from .common import CompressionType
 
 __all__ = [
     "open",
@@ -36,4 +42,10 @@ __all__ = [
     "DatasetINT64",
     "DatasetFLOAT32",
     "DatasetFLOAT64",
+    "File",
+    "Group",
+    "Dataset",
+    "AttributeManager",
+    "CompressionType",
+    "Mode",
 ]

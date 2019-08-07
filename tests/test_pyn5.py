@@ -2,16 +2,17 @@
 # -*- coding: utf-8 -*-
 
 """Tests for `pyn5` package."""
-
-
 import unittest
 from pathlib import Path
 import shutil
+import json
+
 import numpy as np
 import pytest
 
 import pyn5
 
+from .common import blocks_in, attrs_in, z5py, blocks_hash
 from .conftest import BLOCKSIZE
 
 
@@ -92,6 +93,140 @@ def test_read_write_wrong_dtype(ds_dtype):
         ds.write_block([2, 2, 2], block)
 
     np.testing.assert_equal(ds.read_ndarray([4, 4, 4], BLOCKSIZE), np.zeros(BLOCKSIZE))
+
+
+def test_compression(tmp_path, compression_dict):
+    root = tmp_path / "test.n5"
+
+    data = np.arange(100, dtype=np.uint8).reshape((10, 10))
+
+    pyn5.create_dataset(
+        str(root), "ds", data.shape, (5, 5), data.dtype.name.upper(),
+        json.dumps(compression_dict)
+    )
+
+    with open(root / "ds" / "attributes.json") as f:
+        attrs = json.load(f)
+
+    assert attrs["compression"] == compression_dict
+
+    ds = pyn5.DatasetUINT8(str(root), "ds", True)
+    ds.write_ndarray((0, 0), data, 0)
+
+
+def test_default_compression(tmp_path):
+    root = tmp_path / "test.n5"
+
+    data = np.arange(100, dtype=np.uint8).reshape((10, 10))
+
+    pyn5.create_dataset(
+        str(root), "ds", data.shape, (5, 5), data.dtype.name.upper(),
+    )
+
+    with open(root / "ds" / "attributes.json") as f:
+        attrs = json.load(f)
+
+    assert attrs["compression"] == {"type": "gzip", "level": -1}
+
+    ds = pyn5.DatasetUINT8(str(root), "ds", True)
+    ds.write_ndarray((0, 0), data, 0)
+
+
+def test_default_compression_opts(tmp_path, compression_name_opt):
+    name, _ = compression_name_opt
+    root = tmp_path / "test.n5"
+
+    data = np.arange(100, dtype=np.uint8).reshape((10, 10))
+
+    pyn5.create_dataset(
+        str(root), "ds", data.shape, (5, 5), data.dtype.name.upper(),
+        json.dumps({"type": name})
+    )
+
+    with open(root / "ds" / "attributes.json") as f:
+        attrs = json.load(f)
+
+    assert attrs["compression"]["type"] == name
+
+    ds = pyn5.DatasetUINT8(str(root), "ds", True)
+    ds.write_ndarray((0, 0), data, 0)
+
+
+def test_data_ordering(tmp_path):
+    root = tmp_path / "test.n5"
+
+    shape = (10, 20)
+    chunks = (10, 10)
+
+    pyn5.create_dataset(str(root), "ds", shape, chunks, "UINT8")
+    ds = pyn5.DatasetUINT8(str(root), "ds", False)
+    arr = np.array(ds.read_ndarray((0, 0), shape))
+    arr += 1
+    ds.write_ndarray((0, 0), arr, 0)
+
+    ds_path = root / "ds"
+
+    assert blocks_in(ds_path) == {"0", "0/0", "0/1"}
+
+    with open(ds_path / "attributes.json") as f:
+        attrs = json.load(f)
+
+    assert list(shape) == attrs["dimensions"]
+
+
+def test_vs_z5(tmp_path, z5_file):
+    """Check different dimensions, same dtype/compression as z5"""
+    root = tmp_path / "test.n5"
+
+    z5_path = Path(z5_file.path)
+    shape = (10, 20)
+    data = np.arange(np.product(shape)).reshape(shape)
+    chunks = (6, 7)
+
+    pyn5.create_dataset(str(root), "ds", shape, chunks, data.dtype.name.upper())
+    ds = pyn5.DatasetINT64(str(root), "ds", False)
+    ds.write_ndarray((0, 0), data, 0)
+
+    z5_file.create_dataset("ds", data=data, chunks=(6, 7), compression="gzip", level=-1)
+
+    assert np.allclose(ds.read_ndarray((0, 0), shape), z5_file["ds"][:])
+    assert blocks_in(root / "ds") != blocks_in(z5_path / "ds")
+
+    attrs = attrs_in(root / "ds")
+    z5_attrs = attrs_in(z5_path / "ds")
+    for key in ("blockSize", "dimensions"):
+        assert attrs[key] != z5_attrs[key]
+
+    for key in ("dataType", "compression"):
+        assert attrs[key] == z5_attrs[key]
+
+    data2 = pyn5.DatasetINT64(str(z5_path), "ds", False).read_ndarray((0, 0), shape)
+    data3 = z5py.N5File(root)["ds"][:]
+
+    assert not all([
+        np.array_equal(data, data2),
+        np.array_equal(data, data3)
+    ])
+
+
+def test_vs_z5_hash(tmp_path, z5_file):
+    """Check different block hashes to z5"""
+    root = tmp_path / "test.n5"
+
+    z5_path = Path(z5_file.path)
+    shape = (10, 20)
+    data = np.arange(np.product(shape)).reshape(shape)
+    chunks = (6, 7)
+
+    pyn5.create_dataset(
+        str(root), "ds", shape, chunks, data.dtype.name.upper(), json.dumps({"type": "raw"})
+    )
+    ds = pyn5.DatasetINT64(str(root), "ds", False)
+    ds.write_ndarray((0, 0), data, 0)
+
+    z5_file.create_dataset("ds", data=data, chunks=(6, 7), compression="raw")
+
+    assert blocks_hash(root) != blocks_hash(z5_path)
 
 
 class TestPythonReadWrite(unittest.TestCase):

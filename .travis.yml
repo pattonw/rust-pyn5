@@ -37,16 +37,11 @@ deploy_template: &deploy_template
 jobs:
   include:
     - <<: *test_template
-      python: 3.5
-    - <<: *test_template
       python: 3.6
     - <<: *test_template
-      python: 3.7
       dist: xenial
+      python: 3.7
       sudo: required
-    - <<: *deploy_template
-      env:
-        - CIBW_BUILD=cp35-*
     - <<: *deploy_template
       env:
         - CIBW_BUILD=cp36-*
@@ -62,4 +57,3 @@ jobs:
           secure: VeZNGpUs5ne3ZlCeZLPbT+3O6yRDM9sv8emg6m90ZwLuZAlXV0t2dGHKccMTBMbS2jWSy2q4TY2IkN0SOWrOmi53Klt3K5Y461Ra8dT+XdmXK8g+36HJEJKWfFvVpYVuIw72yoUWHZsr2iNxi7tiAc/AjBvbnbgSXuAayuVm+8K7tQ85kkfbdBErDQnhziEiqtIrjak3hwBgjWpm0UEuAKG/eTBFk0BAN9wqRajCS58WLaLVnF4FtAHT4QAxo33j99njB7cz8PLjXNd3BxT2BpMbjqmg8krVW7ayMJKdLvWdICezPB4nlsnL9jBlXMaRvI0ijSl59QkVCDbkrERUCR7IdJZqAX3IFSe+9X1cwzJsJeXYOfQjYMX+ZyqR8qcmQKS6M1u3uYMXhoj+TU9uO0sK4dNxrS0DRhg22TdjAcpqnz0UDVVWfFapltroE0ePVPs8aOOqdpJewRDPDI0ghRg/nzrSIhEI+85XnSTcjm4if5hwiEFchIFlV5d/ZIHtPn+b0fCRTDMq4kjObxD9uBbVvda1+CESCNrE91oB1erlrjygsDnpdRWi5dzaOVe5DJmAxT/V5mPFlskOPJLZr3lzZOQm1FGVJbvTN766plDCWozTAG8wT58hq/nJTBIiRjHlQnhFjlHLkaWTEq/jJ8mA++KXvbofCy833V0OMrw=
         provider: pypi
         user: pattonw
-
