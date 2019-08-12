@@ -20,6 +20,10 @@ class NumpyEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, np.ndarray):
             return obj.tolist()
+        if isinstance(obj, np.integer):
+            return int(obj)
+        if isinstance(obj, np.floating):
+            return float(obj)
         return super().default(obj)
 
 
@@ -59,14 +63,14 @@ class AttributeManager(AttributeManagerBase):
         super().__init__(mode)
 
     @classmethod
-    def from_parent(cls, parent: H5ObjectLike) -> "AttributeManager":
+    def from_container(cls, container: H5ObjectLike) -> "AttributeManager":
         """
         Create AttributeManager for a File, Group or Dataset.
 
-        :param parent: File, Group or Dataset to which the attributes belong.
+        :param container: File, Group or Dataset to which the attributes belong.
         :return: AttributeManager instance
         """
-        return cls(parent._path, parent.mode)
+        return cls(container._path, container.mode)
 
     @restrict_metadata
     def __setitem__(self, k, v) -> None:

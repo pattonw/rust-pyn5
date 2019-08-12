@@ -22,18 +22,16 @@ N5_VERSION_INFO = tuple(int(i) for i in N5_VERSION.split('.'))
 
 
 class Group(GroupBase):
-    def __init__(self, name: str, parent: "Group"):
+    def __init__(self, basename: str, parent: "Group"):
         """
 
-        :param name: basename of the group
+        :param basename: basename of the group
         :param parent: group to which the group belongs
         """
-        self._name = name
-        self._parent = parent
-        self._path = self.parent._path / name
+        super().__init__(basename, parent)
+        self._path = self.parent._path / self.basename
 
-        self._attrs = AttributeManager.from_parent(self)
-        super().__init__(self.mode)
+        self._attrs = AttributeManager.from_container(self)
 
     def _create_child_group(self, name) -> GroupBase:
         dpath = self._path / name
@@ -154,14 +152,6 @@ class Group(GroupBase):
     def attrs(self) -> AttributeManager:
         return self._attrs
 
-    @property
-    def name(self) -> str:
-        return str(Name(self.parent.name) / self._name)
-
-    @property
-    def parent(self):
-        return self._parent
-
     @mutation
     def __delitem__(self, v) -> None:
         shutil.rmtree(self[v]._path)
@@ -180,8 +170,9 @@ class File(FileMixin, Group):
         super().__init__(name, mode)
         self._require_dir(self.filename)
         self._path = self.filename
-        self._attrs = AttributeManager.from_parent(self)
+        self._attrs = AttributeManager.from_container(self)
 
+    @mutation
     def __setitem__(self, name, obj):
         """Not implemented"""
         raise NotImplementedError()

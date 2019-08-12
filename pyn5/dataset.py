@@ -4,7 +4,7 @@ from typing import Union, Tuple, Optional, Any
 
 import numpy as np
 
-from h5py_like import DatasetBase, AttributeManagerBase, mutation, Name
+from h5py_like import DatasetBase, AttributeManagerBase, mutation
 from h5py_like.shape_utils import thread_read_fn, thread_write_fn
 from pyn5.attributes import AttributeManager
 from .pyn5 import (
@@ -38,17 +38,15 @@ dataset_types = {
 class Dataset(DatasetBase):
     threads = None
 
-    def __init__(self, name: str, parent: "Group"):  # noqa would need circular imports
+    def __init__(self, basename: str, parent: "Group"):  # noqa would need circular imports
         """
 
-        :param name: basename of the dataset
+        :param basename: basename of the dataset
         :param parent: group to which the dataset belongs
         """
-        super().__init__(parent.mode)
-        self._name = name
-        self._parent = parent
-        self._path = self.parent._path / name
-        self._attrs = AttributeManager.from_parent(self)
+        super().__init__(basename, parent)
+        self._path = self.parent._path / self.basename
+        self._attrs = AttributeManager.from_container(self)
         self.threads = copy(self.threads)
 
         attrs = self._attrs._read_attributes()
@@ -141,11 +139,3 @@ class Dataset(DatasetBase):
     @property
     def attrs(self) -> AttributeManagerBase:
         return self._attrs
-
-    @property
-    def name(self) -> str:
-        return str(Name(self.parent.name) / self._name)
-
-    @property
-    def parent(self):
-        return self._parent
