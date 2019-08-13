@@ -157,7 +157,10 @@ class Group(GroupBase):
         shutil.rmtree(self[v]._path)
 
     def __len__(self) -> int:
-        return len(list(self))
+        counter = 0
+        for _ in self:
+            counter += 1
+        return counter
 
     def __iter__(self) -> Iterator:
         for path in self._path.iterdir():
