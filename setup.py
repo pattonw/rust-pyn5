@@ -57,6 +57,6 @@ setup(
     test_suite="tests",
     tests_require=test_requirements,
     url="https://github.com/pattonw/pyn5",
-    version="0.1.0",
+    version="1.0.0",
     zip_safe=False,
 )
