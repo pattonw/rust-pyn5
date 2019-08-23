@@ -5,7 +5,5 @@ export CIBW_BUILD=$CIBW_BUILD
 export CIBW_ENVIRONMENT='PATH="$HOME/.rust/bin:$HOME/.cargo/bin:$PATH"'
 cibuildwheel --output-dir wheelhouse
 
-if [[ $TRAVIS_TAG ]]; then
-    pip install twine
-    python -m twine upload wheelhouse/*.whl
-fi
+pip install twine
+python -m twine upload wheelhouse/*.whl
