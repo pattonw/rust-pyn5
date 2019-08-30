@@ -39,8 +39,8 @@ def ds_dtype(request, tmp_path):
     {"type": "raw"},
     {"type": "bzip2", "blockSize": 5},
     {"type": "gzip", "level": 5},
-    {"type": "lz4", "blockSize": 32768},
-    {"type": "xz", "preset": 3},
+    # {"type": "lz4", "blockSize": 32768},
+    # {"type": "xz", "preset": 3},
 ], ids=lambda d: d.get("type", "raw"))
 def compression_dict(request):
     yield deepcopy(request.param)
