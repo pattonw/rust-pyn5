@@ -26,6 +26,7 @@ export PRINT_HELP_PYSCRIPT
 
 BROWSER := python -c "$$BROWSER_PYSCRIPT"
 DATA_DIR = tests/data
+DIST_DIR = target/wheels
 
 help:
 	@python -c "$$PRINT_HELP_PYSCRIPT" < $(MAKEFILE_LIST)
@@ -33,11 +34,13 @@ help:
 clean: clean-build clean-pyc clean-test ## remove all build, test, coverage and Python artifacts
 
 clean-build: ## remove build artifacts
+	rm -fr target/
 	rm -fr build/
 	rm -fr dist/
 	rm -fr .eggs/
 	find . -name '*.egg-info' -exec rm -fr {} +
 	find . -name '*.egg' -exec rm -f {} +
+	find . -name '*.so' -exec rm -f {} +
 
 clean-pyc: ## remove Python file artifacts
 	find . -name '*.pyc' -exec rm -f {} +
@@ -58,7 +61,7 @@ lint: ## check style with flake8
 	flake8 pyn5 tests
 
 test: ## run tests quickly with the default Python
-	python setup.py test
+	maturin develop && pytest -v
 
 test-all: ## run tests on every Python version with tox
 	tox
@@ -81,15 +84,18 @@ servedocs: docs ## compile the docs watching for changes
 	watchmedo shell-command -p '*.rst' -c '$(MAKE) -C docs html' -R -D .
 
 release: dist ## package and upload a release
-	twine upload dist/*
+	twine upload $(DIST_DIR)/*
 
 dist: clean ## builds source and wheel package
-	python setup.py sdist
-	python setup.py bdist_wheel
-	ls -l dist
+	maturin build -i python3.7 -i python3.6 --release && \
+	ls -l $(DIST_DIR)
+
+install-dev: clean
+	pip install -r requirements_dev.txt && maturin develop
 
 install: clean ## install the package to the active Python's site-packages
-	python setup.py install
+	# pip install .  # fails with BackendUnavailable error
+	maturin build --release --no-sdist -i python && pip install $(DIST_DIR)/pyn5-*.whl
 
 $(DATA_DIR)/JeffT1_le.tif:
 	mkdir -p $(DATA_DIR) && \
