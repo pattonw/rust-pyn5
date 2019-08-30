@@ -5,7 +5,6 @@
 import re
 
 from setuptools import setup, find_packages
-from setuptools_rust import Binding, RustExtension
 
 with open("README.rst") as readme_file:
     readme = readme_file.read()
@@ -35,7 +34,6 @@ with open("requirements_dev.txt") as req_file:
 setup(
     author="William Hunter Patton",
     author_email="pattonw@hhmi.org",
-    rust_extensions=[RustExtension("pyn5.pyn5", "Cargo.toml", binding=Binding.PyO3)],
     classifiers=[
         "Development Status :: 2 - Pre-Alpha",
         "Intended Audience :: Developers",
