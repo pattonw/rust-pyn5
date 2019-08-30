@@ -10,29 +10,26 @@ env:
   global:
   - TRAVIS_RUST_VERSION=nightly-2019-07-01
   - RUST_BACKTRACE=1
-  - TWINE_USERNAME=pattonw
+  - PYPI_USERNAME=pattonw
 
 test_template: &test_template
   stage: test
   before_install:
     source ./ci/travis/setup_rust.sh
   install:
-    pip install -U tox-travis setuptools_rust
+    - make install-dev
   script:
-    ./ci/travis/test.sh
+    - make test
 
 deploy_template: &deploy_template
   stage: deploy
   sudo: required
-  services:
-    docker
-  env:
-    - CIBW_BUILD=cp35-*
   install:
-    pip install -U cibuildwheel
+    pip install maturin==0.7.1b1
   script:
-    ./ci/travis/build.sh
+    maturin publish -i python --no-sdist -u PYPI_USERNAME -p PYPI_PASSWORD
 
+# todo: sdist
 
 jobs:
   include:
@@ -43,11 +40,11 @@ jobs:
       python: 3.7
       sudo: required
     - <<: *deploy_template
-      env:
-        - CIBW_BUILD=cp36-*
+      python: 3.6
     - <<: *deploy_template
-      env:
-        - CIBW_BUILD=cp37-*
+      dist: xenial
+      sudo: required
+      python: 3.7
     - stage: deploy
       script:
         echo "skip"
