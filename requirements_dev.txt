@@ -8,7 +8,7 @@ tox==3.13.2
 twine==1.13.0
 Sphinx==2.2.0
 setuptools_rust==0.10.6
-numpy==1.17.1
+numpy==1.17.2
 pytest==5.1.2
 pytest-runner==5.1
 h5py_like==0.6.0
