@@ -4,12 +4,12 @@ wheel==0.33.6
 watchdog==0.9.0
 flake8==3.7.8
 coverage==4.5.4
-tox==3.13.2
+tox==3.14.0
 twine==1.14.0
 Sphinx==2.2.0
 numpy==1.17.2
 pytest==5.1.2
 pytest-runner==5.1
 h5py_like==0.6.0
-h5py==2.9.0
+h5py==2.10.0
 maturin==0.7.2
