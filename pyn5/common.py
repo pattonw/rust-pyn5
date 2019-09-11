@@ -27,14 +27,14 @@ class CompressionType(StrEnum):
     RAW = "raw"
     BZIP2 = "bzip2"
     GZIP = "gzip"
-    LZ4 = "lz4"
-    XZ = "xz"
+    # LZ4 = "lz4"
+    # XZ = "xz"
 
 
 compression_args = {
     CompressionType.RAW: None,
     CompressionType.BZIP2: "blockSize",
     CompressionType.GZIP: "level",
-    CompressionType.LZ4: "blockSize",
-    CompressionType.XZ: "preset",
+    # CompressionType.LZ4: "blockSize",
+    # CompressionType.XZ: "preset",
 }

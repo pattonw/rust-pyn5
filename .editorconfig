@@ -11,6 +11,9 @@ charset = utf-8
 end_of_line = lf
 max_line_length = 98
 
+[*.yml]
+indent_size = 2
+
 [*.bat]
 indent_style = tab
 end_of_line = crlf
