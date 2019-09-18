@@ -70,7 +70,7 @@ This assumes you have the rust nightly toolchain installed
 
     $ mkvirtualenv pyn5
     $ cd pyn5/
-    $ pip install -r requirements_dev.txt
+    $ pip install -r requirements.txt
     $ maturin develop
 
 4. Create a branch for local development::
