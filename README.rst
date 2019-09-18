@@ -29,11 +29,10 @@ Installation
 ``pip install pyn5`` installs pre-compiled wheels.
 To build from source, you need
 
-* `setuptools-rust`_
-* a rust_ compiler
+* `maturin`_
+* a nightly rust_ compiler
 
   - >= 1.34.0-nightly 2019-02-06
-  - <= 1.36.0-nightly 2019-07-01
 
 Features
 --------
@@ -61,7 +60,7 @@ This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypack
 .. _rust-n5: https://github.com/aschampion/rust-n5/
 .. _zarr: https://zarr-developers.github.io/
 .. _z5: https://github.com/constantinpape/z5/
-.. _setuptools-rust: https://github.com/PyO3/setuptools-rust
+.. _maturin: https://pypi.org/project/maturin/
 .. _rust: https://www.rust-lang.org/tools/install
 .. _h5py: https://www.h5py.org/
 .. _h5py_like: https://github.com/clbarnes/h5py_like
