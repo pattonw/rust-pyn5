@@ -30,9 +30,7 @@ Installation
 To build from source, you need
 
 * `maturin`_
-* a nightly rust_ compiler
-
-  - >= 1.34.0-nightly 2019-02-06
+* rust_ compiler nightly-2019-07-19 (some more recent nightly compilers may also work)
 
 Features
 --------
