@@ -30,9 +30,9 @@ name = "pyn5"
 crate-type = ["cdylib"]
 
 [dependencies]
-pyo3 = { version = "0.7", features = ["extension-module"] }
+pyo3 = { version = "0.8", features = ["extension-module"] }
 # liblzma breaks manylinux compatibility
 # n5 = { version = "0.4", default-features = false, features = ["filesystem", "bzip", "gzip", "lz", "xz", "use_ndarray"]}
 n5 = { version = "0.4", default-features = false, features = ["filesystem", "bzip", "gzip", "use_ndarray"]}
-numpy = "0.6"
+numpy = "0.7"
 serde_json = "1.0.39"
