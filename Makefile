@@ -91,7 +91,7 @@ dist: clean ## builds source and wheel package
 	ls -l $(DIST_DIR)
 
 install-dev: clean
-	pip install -r requirements_dev.txt && maturin develop
+	pip install -r requirements.txt && maturin develop
 
 install: clean ## install the package to the active Python's site-packages
 	# pip install .  # fails with BackendUnavailable error

@@ -70,8 +70,8 @@ This assumes you have the rust nightly toolchain installed
 
     $ mkvirtualenv pyn5
     $ cd pyn5/
-    $ pip install -r requirements_dev.txt
-    $ python setup.py develop
+    $ pip install -r requirements.txt
+    $ maturin develop
 
 4. Create a branch for local development::
 
@@ -80,13 +80,11 @@ This assumes you have the rust nightly toolchain installed
    Now you can make your changes locally.
 
 5. When you're done making changes, check that your changes pass flake8 and the
-   tests, including testing other Python versions with tox::
+   tests.
+   If you have changed any rust code, you'll need to recompile first with ``maturin develop``::
 
     $ flake8 pyn5 tests
-    $ python setup.py test or py.test
-    $ tox
-
-   To get flake8 and tox, just pip install them into your virtualenv.
+    $ pytest
 
 6. Commit your changes and push your branch to GitHub::
 
@@ -105,17 +103,10 @@ Before you submit a pull request, check that it meets these guidelines:
 2. If the pull request adds functionality, the docs should be updated. Put
    your new functionality into a function with a docstring, and add the
    feature to the list in README.rst.
-3. The pull request should work for Python 3.5, 3.6, and 3.7. Check
+3. The pull request should work for Python 3.6 and 3.7. Check
    https://travis-ci.org/pattonw/pyn5/pull_requests
    and make sure that the tests pass for all supported Python versions.
 
-Tips
-----
-
-To run a subset of tests::
-
-
-    $ python -m unittest tests.test_pyn5
 
 Deploying
 ---------

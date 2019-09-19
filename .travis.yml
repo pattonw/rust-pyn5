@@ -9,17 +9,21 @@ stages:
     if: (branch = master) AND (tag =~ ^v\d+.*$)
 env:
   global:
-  - TRAVIS_RUST_VERSION=nightly-2019-07-01
+  - TRAVIS_RUST_VERSION=nightly-2019-07-19
   - RUST_BACKTRACE=1
 
 test_template: &test_template
   stage: test
   before_install:
     - source ./ci/travis/setup_rust.sh
+    - pip install -r requirements.txt
   install:
-    - make install-dev
+    # for now, test against release builds, because some bugs have only affected those
+    # e.g. https://github.com/pattonw/rust-pyn5/issues/93
+    - maturin develop --release
   script:
-    - make test
+    - pytest
+    - make lint
 
 jobs:
   include:

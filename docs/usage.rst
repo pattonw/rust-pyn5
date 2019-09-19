@@ -29,7 +29,7 @@ There are additionally some enums defined to optionally help manage open modes a
     )  # default compression
 
     # indexing supports slices, integers, ellipses, and newaxes
-    arr = ds1[:, 5, np.newaxes]
+    arr = ds1[:, 5, np.newaxis]
 
     ds1.attrs["key"] = "value"
 
