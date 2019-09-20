@@ -318,7 +318,7 @@ dependencies = [
 
 [[package]]
 name = "pyn5"
-version = "1.0.0"
+version = "1.0.1"
 dependencies = [
  "n5 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "numpy 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",

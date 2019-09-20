@@ -6,7 +6,7 @@ python:
 stages:
   - test
   - name: deploy
-    if: (branch = master) AND (tag =~ ^v\d+.*$)
+    if: tag =~ ^v\d+.*$
 env:
   global:
   - TRAVIS_RUST_VERSION=nightly-2019-07-19
