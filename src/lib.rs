@@ -16,8 +16,8 @@ fn create_dataset(
     _py: Python,
     root_path: &str,
     path_name: &str,
-    dimensions: Vec<i64>,
-    block_size: Vec<i32>,
+    dimensions: Vec<u64>,
+    block_size: Vec<u32>,
     dtype: &str,
     compression: Option<&str>,
 ) -> PyResult<()> {
@@ -114,15 +114,15 @@ macro_rules! dataset {
             }
 
             #[getter]
-            fn block_shape(&self) -> PyResult<(Vec<i32>)> {
+            fn block_shape(&self) -> PyResult<Vec<u32>> {
                 Ok(self.attr.get_block_size().into())
             }
 
             fn read_ndarray(
                 &self,
                 py: Python,
-                translation: Vec<i64>,
-                dimensions: Vec<i64>,
+                translation: Vec<u64>,
+                dimensions: Vec<u64>,
             ) -> PyResult<Py<PyArrayDyn<$d_type>>> {
                 let arr = py.allow_threads(move || {
                     let bounding_box = BoundingBox::new(translation.into(), dimensions.into());
@@ -136,7 +136,7 @@ macro_rules! dataset {
             fn write_ndarray(
                 &self,
                 py: Python,
-                translation: Vec<i64>,
+                translation: Vec<u64>,
                 arr: &PyArrayDyn<$d_type>,
                 fill_val: $d_type,
             ) -> PyResult<()> {
@@ -152,7 +152,7 @@ macro_rules! dataset {
                 Ok(())
             }
 
-            fn write_block(&self, py: Python, position: Vec<i64>, data: Vec<$d_type>) -> PyResult<()> {
+            fn write_block(&self, py: Python, position: Vec<u64>, data: Vec<$d_type>) -> PyResult<()> {
                 py.allow_threads(move || {
                     let block_shape = self.attr.get_block_size();
                     let block_size = self.attr.get_block_num_elements();
