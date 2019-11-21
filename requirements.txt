@@ -8,7 +8,7 @@ tox==3.14.1
 Sphinx==2.2.1
 numpy==1.17.3
 pytest==5.2.2
-pytest-runner==5.1
+pytest-runner==5.2
 h5py_like==0.6.0
 h5py==2.10.0
 maturin==0.7.6
