@@ -45,7 +45,7 @@ fn create_dataset(
     };
 
     let n = N5Filesystem::open_or_create(root_path)?;
-    if !n.exists(path_name) {
+    if !n.exists(path_name)? {
         let compression_type: CompressionType = match compression {
             None => CompressionType::new::<compression::gzip::GzipCompression>(),
             Some(s) => {
@@ -165,7 +165,7 @@ macro_rules! dataset {
                             block_shape,
                             block_size
                         )))
-                    } else if self.n5.exists(&self.path) {
+                    } else if self.n5.exists(&self.path)? {
                         let block_in = VecDataBlock::new(block_shape.into(), position.into(), data);
                         self.n5.write_block(&self.path, &self.attr, &block_in)?;
                         Ok(())
