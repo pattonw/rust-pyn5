@@ -18,6 +18,7 @@ classifier = [
     "Programming Language :: Rust",
     "Programming Language :: Python :: 3.6",
     "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
 ]
 requires-dist = ["numpy", "h5py_like>=0.6.0"]
 requires-python = ">=3.6"

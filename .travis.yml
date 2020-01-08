@@ -32,14 +32,18 @@ jobs:
       python: 3.6
     - <<: *test_template
       name: "test py37"
+    - <<: *test_template
+      name: "test py38"
+      python: 3.8
     - stage: deploy
       addons:
         apt:
           packages:
             - python3.6
+            - python3.8
       before_install:
         - source ./ci/travis/setup_rust.sh
       install:
         - pip install maturin==0.7.2
       script:
-        - maturin publish -u pattonw -p PYPI_PASSWORD -i python3.6 -i python3.7
+        - maturin publish -u pattonw -p PYPI_PASSWORD -i python3.6 -i python3.7 -i python3.8
