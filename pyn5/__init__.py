@@ -4,7 +4,7 @@
 
 __author__ = """William Hunter Patton"""
 __email__ = "pattonw@hhmi.org"
-__version__ = "1.0.1"
+__version__ = "1.1.0"
 
 from h5py_like import Mode
 
