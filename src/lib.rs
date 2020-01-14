@@ -141,12 +141,9 @@ macro_rules! dataset {
                 fill_val: $d_type,
             ) -> PyResult<()> {
                 py.allow_threads(move || {
-                    self.n5.write_ndarray::<$d_type>(
+                    self.n5.write_ndarray::<$d_type, _>(
                         &self.path, &self.attr, translation.into(),
-                        // TODO: because of n5's `write_ndarray` signature, must
-                        // pass a reference to an owned ndarray here. n5 could
-                        // instead take an array view, which may solve this.
-                        &arr.as_array().to_owned(), fill_val
+                        arr.as_array(), fill_val
                     )
                 })?;
                 Ok(())
