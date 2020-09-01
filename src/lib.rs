@@ -1,5 +1,3 @@
-#![feature(specialization)]
-
 extern crate n5;
 extern crate numpy;
 #[macro_use]
@@ -87,30 +85,27 @@ macro_rules! dataset {
         impl $dataset_name {
             #[new]
             fn __new__(
-                obj: &PyRawObject,
                 root_path: &str,
                 path_name: &str,
                 read_only: bool,
-            ) -> PyResult<()> {
-                Ok(obj.init({
-                    if read_only {
-                        let n = N5Filesystem::open(root_path)?;
-                        let attributes = n.get_dataset_attributes(path_name)?;
-                        Self {
-                            n5: n,
-                            attr: attributes,
-                            path: path_name.to_string(),
-                        }
-                    } else {
-                        let n = N5Filesystem::open_or_create(root_path)?;
-                        let attributes = n.get_dataset_attributes(path_name)?;
-                        Self {
-                            n5: n,
-                            attr: attributes,
-                            path: path_name.to_string(),
-                        }
-                    }
-                }))
+            ) -> PyResult<Self> {
+                if read_only {
+                    let n = N5Filesystem::open(root_path)?;
+                    let attributes = n.get_dataset_attributes(path_name)?;
+                    Ok(Self {
+                        n5: n,
+                        attr: attributes,
+                        path: path_name.to_string(),
+                    })
+                } else {
+                    let n = N5Filesystem::open_or_create(root_path)?;
+                    let attributes = n.get_dataset_attributes(path_name)?;
+                    Ok(Self {
+                        n5: n,
+                        attr: attributes,
+                        path: path_name.to_string(),
+                    })
+                }
             }
 
             #[getter]
@@ -140,10 +135,12 @@ macro_rules! dataset {
                 arr: &PyArrayDyn<$d_type>,
                 fill_val: $d_type,
             ) -> PyResult<()> {
+                let read_only = arr.readonly();
+                let arr = read_only.as_array();
                 py.allow_threads(move || {
                     self.n5.write_ndarray::<$d_type, _>(
                         &self.path, &self.attr, translation.into(),
-                        arr.as_array(), fill_val
+                        arr, fill_val
                     )
                 })?;
                 Ok(())

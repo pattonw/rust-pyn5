@@ -9,7 +9,7 @@ stages:
     if: tag =~ ^v\d+.*$
 env:
   global:
-  - TRAVIS_RUST_VERSION=nightly-2019-11-03
+  - TRAVIS_RUST_VERSION=stable
   - RUST_BACKTRACE=1
 
 test_template: &test_template
