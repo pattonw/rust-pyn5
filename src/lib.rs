@@ -136,10 +136,11 @@ macro_rules! dataset {
                 fill_val: $d_type,
             ) -> PyResult<()> {
                 let read_only = arr.readonly();
+                let arr = read_only.as_array();
                 py.allow_threads(move || {
                     self.n5.write_ndarray::<$d_type, _>(
                         &self.path, &self.attr, translation.into(),
-                        read_only.as_array(), fill_val
+                        arr, fill_val
                     )
                 })?;
                 Ok(())
