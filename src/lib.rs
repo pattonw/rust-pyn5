@@ -173,31 +173,30 @@ macro_rules! dataset {
     };
 }
 
-
 dataset!(DatasetUINT8, UINT8, u8);
-// dataset!(DatasetUINT16, UINT16, u16);
-// dataset!(DatasetUINT32, UINT32, u32);
-// dataset!(DatasetUINT64, UINT64, u64);
-// dataset!(DatasetINT8, INT8, i8);
-// dataset!(DatasetINT16, INT16, i16);
-// dataset!(DatasetINT32, INT32, i32);
-// dataset!(DatasetINT64, INT64, i64);
-// dataset!(DatasetFLOAT32, FLOAT32, f32);
-// dataset!(DatasetFLOAT64, FLOAT64, f64);
+dataset!(DatasetUINT16, UINT16, u16);
+dataset!(DatasetUINT32, UINT32, u32);
+dataset!(DatasetUINT64, UINT64, u64);
+dataset!(DatasetINT8, INT8, i8);
+dataset!(DatasetINT16, INT16, i16);
+dataset!(DatasetINT32, INT32, i32);
+dataset!(DatasetINT64, INT64, i64);
+dataset!(DatasetFLOAT32, FLOAT32, f32);
+dataset!(DatasetFLOAT64, FLOAT64, f64);
 
 #[pymodule]
 fn pyn5(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_wrapped(wrap_pyfunction!(create_dataset))?;
     m.add_class::<DatasetUINT8>()?;
-    // m.add_class::<DatasetUINT16>()?;
-    // m.add_class::<DatasetUINT32>()?;
-    // m.add_class::<DatasetUINT64>()?;
-    // m.add_class::<DatasetINT8>()?;
-    // m.add_class::<DatasetINT16>()?;
-    // m.add_class::<DatasetINT32>()?;
-    // m.add_class::<DatasetINT64>()?;
-    // m.add_class::<DatasetFLOAT32>()?;
-    // m.add_class::<DatasetFLOAT64>()?;
+    m.add_class::<DatasetUINT16>()?;
+    m.add_class::<DatasetUINT32>()?;
+    m.add_class::<DatasetUINT64>()?;
+    m.add_class::<DatasetINT8>()?;
+    m.add_class::<DatasetINT16>()?;
+    m.add_class::<DatasetINT32>()?;
+    m.add_class::<DatasetINT64>()?;
+    m.add_class::<DatasetFLOAT32>()?;
+    m.add_class::<DatasetFLOAT64>()?;
 
     Ok(())
 }
