@@ -57,7 +57,7 @@ class Dataset(DatasetBase):
             self._chunks = tuple(attrs["blockSize"][::-1])
         except KeyError:
             raise ValueError(
-                f"Not a dataset (missing metadata key): " + str(self._path)
+                f"Not a dataset (missing metadata key): {self._path}"
             )
 
         self._impl = dataset_types[self.dtype](
