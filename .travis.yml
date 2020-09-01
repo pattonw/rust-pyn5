@@ -48,6 +48,6 @@ jobs:
       before_install:
         - source ./ci/travis/setup_rust.sh
       install:
-        - pip install maturin==0.7.2
+        - pip install -r requirements.txt
       script:
         - maturin publish -u pattonw -p $PYPI_PASSWORD -i python3.6 -i python3.7 -i python3.8
