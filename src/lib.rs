@@ -135,10 +135,11 @@ macro_rules! dataset {
                 arr: &PyArrayDyn<$d_type>,
                 fill_val: $d_type,
             ) -> PyResult<()> {
+                let read_only = arr.readonly();
                 py.allow_threads(move || {
                     self.n5.write_ndarray::<$d_type, _>(
                         &self.path, &self.attr, translation.into(),
-                        arr.as_array(), fill_val
+                        read_only.as_array(), fill_val
                     )
                 })?;
                 Ok(())
