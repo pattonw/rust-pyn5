@@ -15,6 +15,8 @@ env:
 test_template: &test_template
   stage: test
   before_install:
+    - sudo apt-get update
+    - sudo apt-get -y install musl-tools
     - source ./ci/travis/setup_rust.sh
     - pip install -r requirements.txt
   install:
@@ -42,13 +44,14 @@ jobs:
           sources:
             - deadsnakes
           packages:
-            - python3.6
             - python3.7
             - python3.8
             - python3.9
       before_install:
+        - sudo apt-get update
+        - sudo apt-get -y install musl-tools
         - source ./ci/travis/setup_rust.sh
       install:
         - pip install -r requirements.txt
       script:
-        - maturin publish -u pattonw -p $PYPI_PASSWORD -i python3.6 -i python3.7 -i python3.8 -i python3.9
+        - maturin publish -u pattonw -p $PYPI_PASSWORD -i python3.7 -i python3.8 -i python3.9
