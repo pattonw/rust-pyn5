@@ -28,9 +28,6 @@ test_template: &test_template
 jobs:
   include:
     - <<: *test_template
-      name: "test py36"
-      python: 3.6
-    - <<: *test_template
       name: "test py37"
       python: 3.7
     - <<: *test_template
