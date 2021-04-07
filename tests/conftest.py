@@ -55,7 +55,7 @@ def compression_name_opt(compression_dict):
 
 @pytest.fixture
 def file_(tmp_path):
-    f = pyn5.File(tmp_path / "test.n5")
+    f = pyn5.File(tmp_path / "test.n5", "a")
     yield f
 
 
@@ -64,7 +64,7 @@ def h5_file(tmp_path):
     if not h5py:
         pytest.skip("h5py not installed")
 
-    with h5py.File(tmp_path / "test.hdf5") as f:
+    with h5py.File(tmp_path / "test.hdf5", "a") as f:
         yield f
 
 
@@ -73,4 +73,4 @@ def z5_file(tmp_path):
     if not z5py:
         pytest.skip("z5py not installed")
 
-    yield z5py.N5File(tmp_path / "test_z5.n5")
+    yield z5py.N5File(tmp_path / "test_z5.n5", "a")
