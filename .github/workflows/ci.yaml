@@ -89,8 +89,8 @@ jobs:
           # needed to correctly format errors, see #1865
           components: rust-src
 
-      - name: Build (no features)
-        run: cargo build --lib --tests --no-default-features
+      - name: install
+        run: make install-dev
   
       - name: Test
         run: make test
