@@ -89,17 +89,11 @@ jobs:
           # needed to correctly format errors, see #1865
           components: rust-src
 
-      - uses: Swatinem/rust-cache@v1
-        with:
-          key: cargo-${{ matrix.platform.python-architecture }}-${{ matrix.platform.os }}-${{ matrix.msrv }}
-        continue-on-error: true
-
       - name: Build (no features)
         run: cargo build --lib --tests --no-default-features
   
-      - if: ${{ !startsWith(matrix.python-version, 'pypy') }}
-        name: Test
-        run: cargo test --no-default-features --lib --tests
+      - name: Test
+        run: make test
 
     env:
       CARGO_TERM_VERBOSE: true
