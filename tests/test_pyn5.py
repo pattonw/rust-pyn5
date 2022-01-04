@@ -178,7 +178,7 @@ def test_data_ordering(tmp_path):
 
     ds_path = root / "ds"
 
-    assert blocks_in(ds_path) == {"0", "0/0", "0/1"}
+    assert blocks_in(ds_path) == {"0", str(Path("0", "0")), str(Path("0","1"))}
 
     with open(ds_path / "attributes.json") as f:
         attrs = json.load(f)
