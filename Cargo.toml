@@ -10,6 +10,7 @@ homepage = "https://github.com/pattonw/rust-pyn5"
 documentation = "https://rust-pyn5.readthedocs.io"
 
 [package.metadata.maturin]
+python-source = "python"
 classifier = [
     "Development Status :: 2 - Pre-Alpha",
     "Intended Audience :: Developers",
