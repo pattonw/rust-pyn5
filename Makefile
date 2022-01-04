@@ -58,7 +58,7 @@ clean-data:
 	rm -rf $(DATA_DIR)
 
 lint: ## check style with flake8
-	flake8 pyn5 tests
+	flake8 python/pyn5 tests
 
 test: ## run tests quickly with the default Python
 	pytest -v
@@ -67,7 +67,7 @@ test-all: ## run tests on every Python version with tox
 	tox
 
 coverage: ## check code coverage quickly with the default Python
-	coverage run --source pyn5 setup.py test
+	coverage run --source python/pyn5 setup.py test
 	coverage report -m
 	coverage html
 	$(BROWSER) htmlcov/index.html
@@ -75,7 +75,7 @@ coverage: ## check code coverage quickly with the default Python
 docs: ## generate Sphinx HTML documentation, including API docs
 	rm -f docs/pyn5.rst
 	rm -f docs/modules.rst
-	sphinx-apidoc -o docs/ pyn5
+	sphinx-apidoc -o docs/ python/pyn5
 	$(MAKE) -C docs clean
 	$(MAKE) -C docs html
 	$(BROWSER) docs/_build/html/index.html
@@ -106,7 +106,7 @@ $(DATA_DIR)/JeffT1_le.tif:
 data: $(DATA_DIR)/JeffT1_le.tif
 
 fmt_py:
-	black tests pyn5 --check
+	black tests python --check
 
 fmt_rust:
 	cargo fmt --all -- --check
