@@ -61,6 +61,9 @@ jobs:
           components: rust-src
 
       - name: install
+        run: make install
+
+      - name: publish
         run: maturin publish -u pattonw
 
     env:
