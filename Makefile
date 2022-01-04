@@ -94,8 +94,8 @@ install-dev: clean
 	pip install -r requirements.txt && maturin develop
 
 install: clean ## install the package to the active Python's site-packages
-	# pip install .  # fails with BackendUnavailable error
-	maturin build --release --no-sdist -i python && pip install $(DIST_DIR)/pyn5-*.whl
+	pip install .  # fails with BackendUnavailable error
+	# maturin build --release --no-sdist -i python && pip install $(DIST_DIR)/pyn5-*.whl
 
 $(DATA_DIR)/JeffT1_le.tif:
 	mkdir -p $(DATA_DIR) && \
@@ -103,3 +103,13 @@ $(DATA_DIR)/JeffT1_le.tif:
 	unzip $(DATA_DIR)/t1-head-raw.zip -d $(DATA_DIR)
 
 data: $(DATA_DIR)/JeffT1_le.tif
+
+fmt_py:
+	black . --check
+
+fmt_rust:
+	cargo fmt --all -- --check
+
+clippy:
+	cargo clippy --features="$(ALL_ADDITIVE_FEATURES)" --all-targets --workspace -- -Dwarnings
+	cargo clippy --features="abi3 $(ALL_ADDITIVE_FEATURES)" --all-targets --workspace -- -Dwarnings
