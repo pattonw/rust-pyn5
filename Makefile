@@ -105,11 +105,10 @@ $(DATA_DIR)/JeffT1_le.tif:
 data: $(DATA_DIR)/JeffT1_le.tif
 
 fmt_py:
-	black . --check
+	black tests pyn5 --check
 
 fmt_rust:
 	cargo fmt --all -- --check
 
 clippy:
-	cargo clippy --features="$(ALL_ADDITIVE_FEATURES)" --all-targets --workspace -- -Dwarnings
-	cargo clippy --features="abi3 $(ALL_ADDITIVE_FEATURES)" --all-targets --workspace -- -Dwarnings
+	cargo clippy --all-targets --workspace -- -Dwarnings
