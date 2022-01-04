@@ -11,14 +11,15 @@ except ImportError:
 def blocks_in(dpath):
     return {
         str(path.relative_to(dpath))
-        for path in dpath.glob('**/*')
+        for path in dpath.glob("**/*")
         if path.suffix != ".json"
     }
 
 
 def iter_block_paths(dpath):
     for fpath in sorted(
-        fpath for fpath in dpath.glob('**/*')
+        fpath
+        for fpath in dpath.glob("**/*")
         if fpath.is_file() and fpath.suffix != ".json"
     ):
         yield fpath
@@ -46,12 +47,11 @@ class BlockContents(NamedTuple):
 
     @classmethod
     def from_block(cls, fpath):
-        with open(fpath, 'rb') as f:
+        with open(fpath, "rb") as f:
             mode = int.from_bytes(f.read(2), "big", signed=False)
             ndim = int.from_bytes(f.read(2), "big", signed=False)
             shape = tuple(
-                int.from_bytes(f.read(4), "big", signed=False)
-                for _ in range(ndim)
+                int.from_bytes(f.read(4), "big", signed=False) for _ in range(ndim)
             )
             if mode:
                 num_elem = int.from_bytes(f.read(4), "big", signed=False)

@@ -9,7 +9,10 @@ from pathlib import Path
 
 from h5py_like import Mode, FileMixin
 from h5py_like.test_utils import (
-    FileTestBase, ThreadedDatasetTestBase, GroupTestBase, ModeTestBase,
+    FileTestBase,
+    ThreadedDatasetTestBase,
+    GroupTestBase,
+    ModeTestBase,
 )
 from pyn5 import File
 
