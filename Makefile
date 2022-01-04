@@ -61,7 +61,7 @@ lint: ## check style with flake8
 	flake8 pyn5 tests
 
 test: ## run tests quickly with the default Python
-	maturin develop && pytest -v
+	pytest -v
 
 test-all: ## run tests on every Python version with tox
 	tox
