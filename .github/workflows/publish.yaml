@@ -1,13 +1,8 @@
 name: publish
 
 on:
-  push:
-    branches:
-      - actions
-  workflow_run:
-    workflows: ["CI"]
-    types:
-      - completed
+  release:
+    types: [published]
 
 env:
   CARGO_TERM_COLOR: always
@@ -64,7 +59,7 @@ jobs:
         run: make install
 
       - name: publish
-        run: maturin publish -u pattonw
+        run: maturin publish -u pattonw -p ${{ secrets.PYPI_PASSWORD }} -i $(which python)
 
     env:
       CARGO_TERM_VERBOSE: true
