@@ -63,11 +63,6 @@ jobs:
               python-architecture: "x64",
               rust-target: "x86_64-pc-windows-msvc",
             },
-            {
-              os: "windows-latest",
-              python-architecture: "x86",
-              rust-target: "i686-pc-windows-msvc",
-            },
           ]
 
     steps:
