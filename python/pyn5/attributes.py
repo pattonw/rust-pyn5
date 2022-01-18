@@ -29,11 +29,13 @@ class NumpyEncoder(json.JSONEncoder):
 
 def restrict_metadata(fn):
     """Decorator for AttributeManager methods which prevents mutation of N5 metadata"""
+
     @wraps(fn)
     def wrapped(obj: "AttributeManager", key, *args, **kwargs):
         if obj._is_dataset() and key in obj._dataset_keys:
             raise RuntimeError(f"N5 metadata (key '{key}') cannot be mutated")
         return fn(obj, key, *args, **kwargs)
+
     return mutation(wrapped)
 
 

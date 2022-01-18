@@ -101,8 +101,12 @@ def test_compression(tmp_path, compression_dict):
     data = np.arange(100, dtype=np.uint8).reshape((10, 10))
 
     pyn5.create_dataset(
-        str(root), "ds", data.shape, (5, 5), data.dtype.name.upper(),
-        json.dumps(compression_dict)
+        str(root),
+        "ds",
+        data.shape,
+        (5, 5),
+        data.dtype.name.upper(),
+        json.dumps(compression_dict),
     )
 
     with open(root / "ds" / "attributes.json") as f:
@@ -120,7 +124,11 @@ def test_default_compression(tmp_path):
     data = np.arange(100, dtype=np.uint8).reshape((10, 10))
 
     pyn5.create_dataset(
-        str(root), "ds", data.shape, (5, 5), data.dtype.name.upper(),
+        str(root),
+        "ds",
+        data.shape,
+        (5, 5),
+        data.dtype.name.upper(),
     )
 
     with open(root / "ds" / "attributes.json") as f:
@@ -139,8 +147,12 @@ def test_default_compression_opts(tmp_path, compression_name_opt):
     data = np.arange(100, dtype=np.uint8).reshape((10, 10))
 
     pyn5.create_dataset(
-        str(root), "ds", data.shape, (5, 5), data.dtype.name.upper(),
-        json.dumps({"type": name})
+        str(root),
+        "ds",
+        data.shape,
+        (5, 5),
+        data.dtype.name.upper(),
+        json.dumps({"type": name}),
     )
 
     with open(root / "ds" / "attributes.json") as f:
@@ -166,7 +178,7 @@ def test_data_ordering(tmp_path):
 
     ds_path = root / "ds"
 
-    assert blocks_in(ds_path) == {"0", "0/0", "0/1"}
+    assert blocks_in(ds_path) == {"0", str(Path("0", "0")), str(Path("0", "1"))}
 
     with open(ds_path / "attributes.json") as f:
         attrs = json.load(f)
@@ -203,10 +215,7 @@ def test_vs_z5(tmp_path, z5_file):
     data2 = pyn5.DatasetINT64(str(z5_path), "ds", False).read_ndarray((0, 0), shape)
     data3 = z5py.N5File(root)["ds"][:]
 
-    assert not all([
-        np.array_equal(data, data2),
-        np.array_equal(data, data3)
-    ])
+    assert not all([np.array_equal(data, data2), np.array_equal(data, data3)])
 
 
 def test_vs_z5_hash(tmp_path, z5_file):
@@ -219,7 +228,12 @@ def test_vs_z5_hash(tmp_path, z5_file):
     chunks = (6, 7)
 
     pyn5.create_dataset(
-        str(root), "ds", shape, chunks, data.dtype.name.upper(), json.dumps({"type": "raw"})
+        str(root),
+        "ds",
+        shape,
+        chunks,
+        data.dtype.name.upper(),
+        json.dumps({"type": "raw"}),
     )
     ds = pyn5.DatasetINT64(str(root), "ds", False)
     ds.write_ndarray((0, 0), data, 0)

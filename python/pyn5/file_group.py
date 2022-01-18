@@ -18,7 +18,7 @@ from .attributes import AttributeManager
 from .pyn5 import create_dataset
 
 N5_VERSION = "2.0.2"
-N5_VERSION_INFO = tuple(int(i) for i in N5_VERSION.split('.'))
+N5_VERSION_INFO = tuple(int(i) for i in N5_VERSION.split("."))
 
 
 class Group(GroupBase):
@@ -50,8 +50,15 @@ class Group(GroupBase):
         return Group(name, self)
 
     def _create_child_dataset(
-        self, name, shape=None, dtype=None, data=None, chunks=None,
-        compression=None, compression_opts=None, **kwds
+        self,
+        name,
+        shape=None,
+        dtype=None,
+        data=None,
+        chunks=None,
+        compression=None,
+        compression_opts=None,
+        **kwds,
     ):
         for key in kwds:
             warnings.warn(
@@ -220,12 +227,14 @@ class File(FileMixin, Group):
             if not version:
                 raise ValueError(f"No N5 version found in {attrs._path}")
 
-            version_info = tuple(int(i) for i in version.split('.'))
+            version_info = tuple(int(i) for i in version.split("."))
 
             if version_info[0] != N5_VERSION_INFO[0]:
                 raise ValueError(f"Expected N5 version '{N5_VERSION}', got {version}")
             elif version_info[1] != N5_VERSION_INFO[1]:
-                warnings.warn(f"Expected N5 version '{N5_VERSION}', got {version};"
-                              f" trying to open anyway")
+                warnings.warn(
+                    f"Expected N5 version '{N5_VERSION}', got {version};"
+                    f" trying to open anyway"
+                )
 
         return created

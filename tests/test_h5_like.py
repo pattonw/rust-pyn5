@@ -9,7 +9,10 @@ from pathlib import Path
 
 from h5py_like import Mode, FileMixin
 from h5py_like.test_utils import (
-    FileTestBase, ThreadedDatasetTestBase, GroupTestBase, ModeTestBase,
+    FileTestBase,
+    ThreadedDatasetTestBase,
+    GroupTestBase,
+    ModeTestBase,
 )
 from pyn5 import File
 
@@ -91,7 +94,7 @@ def test_created_dirs(file_):
 
     ds = file_.create_dataset("ds", data=data, chunks=(10, 10))
 
-    assert blocks_in(ds._path) == {"0", "1", "0/0", "1/0"}
+    assert blocks_in(ds._path) == {"0", "1", str(Path("0", "0")), str(Path("1", "0"))}
 
     attrs = ds.attrs._read_attributes()
 

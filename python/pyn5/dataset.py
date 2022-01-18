@@ -38,7 +38,9 @@ dataset_types = {
 class Dataset(DatasetBase):
     threads = None
 
-    def __init__(self, basename: str, parent: "Group"):  # noqa would need circular imports
+    def __init__(
+        self, basename: str, parent: "Group"
+    ):  # noqa would need circular imports
         """
 
         :param basename: basename of the dataset
@@ -56,9 +58,7 @@ class Dataset(DatasetBase):
             self._dtype = np.dtype(attrs["dataType"].lower())
             self._chunks = tuple(attrs["blockSize"][::-1])
         except KeyError:
-            raise ValueError(
-                f"Not a dataset (missing metadata key): {self._path}"
-            )
+            raise ValueError(f"Not a dataset (missing metadata key): {self._path}")
 
         self._impl = dataset_types[self.dtype](
             str(self.file._path),
@@ -100,6 +100,7 @@ class Dataset(DatasetBase):
             ).transpose()
 
         if self.threads:
+
             def fn(translation, dimensions):
                 return thread_read_fn(
                     translation,
@@ -107,8 +108,9 @@ class Dataset(DatasetBase):
                     self.chunks,
                     self.shape,
                     inner_fn,
-                    self.threads
+                    self.threads,
                 )
+
         else:
             fn = inner_fn
 
@@ -122,15 +124,12 @@ class Dataset(DatasetBase):
             )
 
         if self.threads:
+
             def fn(offset, arr):
                 return thread_write_fn(
-                    offset,
-                    arr,
-                    self.chunks,
-                    self.shape,
-                    inner_fn,
-                    self.threads
+                    offset, arr, self.chunks, self.shape, inner_fn, self.threads
                 )
+
         else:
             fn = inner_fn
 

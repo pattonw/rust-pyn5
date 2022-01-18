@@ -46,14 +46,14 @@ fn create_dataset(
     if !n.exists(path_name)? {
         let compression_type: CompressionType = match compression {
             None => CompressionType::new::<compression::gzip::GzipCompression>(),
-            Some(s) => {
-                match serde_json::from_str(s) {
-                    Ok(c) => c,
-                    Err(_e) => return Err(
-                        exceptions::ValueError::py_err("Could not deserialize compression")
-                    )
+            Some(s) => match serde_json::from_str(s) {
+                Ok(c) => c,
+                Err(_e) => {
+                    return Err(exceptions::ValueError::py_err(
+                        "Could not deserialize compression",
+                    ))
                 }
-            }
+            },
         };
 
         let data_attrs = DatasetAttributes::new(

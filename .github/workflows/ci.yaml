@@ -1,0 +1,98 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - actions
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  fmt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+      - run: pip install black
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          components: rustfmt
+      - name: Check python formatting (black)
+        run: make fmt_py
+      - name: Check rust formatting (rustfmt)
+        run: make fmt_rust
+
+  clippy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          components: clippy
+      - run: make clippy
+
+  build:
+    needs: [fmt] # don't wait for clippy as fails rarely and takes longer
+    name: python${{ matrix.python-version }}-${{ matrix.platform.python-architecture }} ${{ matrix.platform.os }} ${{ matrix.msrv }}
+    runs-on: ${{ matrix.platform.os }}
+    strategy:
+      fail-fast: false # If one platform fails, allow the rest to keep testing.
+      matrix:
+        rust: [stable]
+        python-version: [3.7, 3.8, 3.9]
+        platform:
+          [
+            {
+              os: "macos-latest",
+              python-architecture: "x64",
+              rust-target: "x86_64-apple-darwin",
+            },
+            {
+              os: "ubuntu-latest",
+              python-architecture: "x64",
+              rust-target: "x86_64-unknown-linux-gnu",
+            },
+            {
+              os: "windows-latest",
+              python-architecture: "x64",
+              rust-target: "x86_64-pc-windows-msvc",
+            },
+          ]
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+          architecture: ${{ matrix.platform.python-architecture }}
+
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.rust }}
+          target: ${{ matrix.platform.rust-target }}
+          profile: minimal
+          default: true
+          # needed to correctly format errors, see #1865
+          components: rust-src
+
+      - name: install
+        run: make install
+  
+      - name: Test
+        run: make test
+
+    env:
+      CARGO_TERM_VERBOSE: true
+      CARGO_BUILD_TARGET: ${{ matrix.platform.rust-target }}
+      RUST_BACKTRACE: 1
+      RUSTFLAGS: "-D warnings"
+      RUSTDOCFLAGS: "-D warnings"

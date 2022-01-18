@@ -58,16 +58,16 @@ clean-data:
 	rm -rf $(DATA_DIR)
 
 lint: ## check style with flake8
-	flake8 pyn5 tests
+	flake8 python/pyn5 tests
 
 test: ## run tests quickly with the default Python
-	maturin develop && pytest -v
+	pytest -v
 
 test-all: ## run tests on every Python version with tox
 	tox
 
 coverage: ## check code coverage quickly with the default Python
-	coverage run --source pyn5 setup.py test
+	coverage run --source python/pyn5 setup.py test
 	coverage report -m
 	coverage html
 	$(BROWSER) htmlcov/index.html
@@ -75,7 +75,7 @@ coverage: ## check code coverage quickly with the default Python
 docs: ## generate Sphinx HTML documentation, including API docs
 	rm -f docs/pyn5.rst
 	rm -f docs/modules.rst
-	sphinx-apidoc -o docs/ pyn5
+	sphinx-apidoc -o docs/ python/pyn5
 	$(MAKE) -C docs clean
 	$(MAKE) -C docs html
 	$(BROWSER) docs/_build/html/index.html
@@ -94,8 +94,9 @@ install-dev: clean
 	pip install -r requirements.txt && maturin develop
 
 install: clean ## install the package to the active Python's site-packages
-	# pip install .  # fails with BackendUnavailable error
-	maturin build --release --no-sdist -i python && pip install $(DIST_DIR)/pyn5-*.whl
+	pip install -r requirements.txt
+	pip install .  # fails with BackendUnavailable error
+	# maturin build --release --no-sdist -i python && pip install $(DIST_DIR)/pyn5-*.whl
 
 $(DATA_DIR)/JeffT1_le.tif:
 	mkdir -p $(DATA_DIR) && \
@@ -103,3 +104,12 @@ $(DATA_DIR)/JeffT1_le.tif:
 	unzip $(DATA_DIR)/t1-head-raw.zip -d $(DATA_DIR)
 
 data: $(DATA_DIR)/JeffT1_le.tif
+
+fmt_py:
+	black tests python --check
+
+fmt_rust:
+	cargo fmt --all -- --check
+
+clippy:
+	cargo clippy --all-targets --workspace -- -Dwarnings
