@@ -6,7 +6,7 @@ flake8==4.0.1
 coverage==6.3.2
 tox==3.24.5
 Sphinx==4.4.0
-numpy==1.21.2
+numpy==1.22.2
 pytest==6.2.5
 pytest-runner==5.3.1
 h5py_like==0.6.0
