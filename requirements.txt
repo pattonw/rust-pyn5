@@ -10,5 +10,5 @@ numpy==1.22.2
 pytest==7.0.1
 pytest-runner==6.0.0
 h5py_like==0.6.0
-h5py==3.4.0
+h5py==3.6.0
 maturin==0.12.6
