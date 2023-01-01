@@ -4,7 +4,7 @@ wheel==0.38.4
 watchdog==2.2.1
 flake8==6.0.0
 coverage==7.0.1
-tox==3.24.4
+tox==4.1.2
 Sphinx==4.2.0
 numpy==1.21.2
 pytest==6.2.5
