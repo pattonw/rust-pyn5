@@ -7,7 +7,7 @@ coverage==7.5.4
 tox==4.15.1
 Sphinx==7.3.7
 numpy==2.0.0
-pytest==6.2.5
+pytest==8.2.2
 pytest-runner==5.3.1
 h5py_like==0.6.0
 h5py==3.4.0
